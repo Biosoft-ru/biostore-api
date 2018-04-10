@@ -1,0 +1,151 @@
+package ru.biosoft.biostoreapi;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import javax.annotation.Nonnull;
+import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonObject;
+
+/**
+ * Utility functions to communicate with biostore server
+ */
+public class BiostoreConnector
+{
+    protected Map<String, String> sessionCookies = new HashMap<>();
+
+    protected String serverLink;
+
+    protected String serverKey;
+
+    public static final String BIOSTORE_DEFAULT_URL = "https://bio-store.org/biostore";
+
+    public static String getDefaultBiostoreLink()
+    {
+        return BIOSTORE_DEFAULT_URL;
+    }
+    public static BiostoreConnector getDefaultConnector(String serverName)
+    {
+        return new BiostoreConnector( BIOSTORE_DEFAULT_URL + "/permission", serverName );
+    }
+
+    public BiostoreConnector(String serverLink)
+    {
+        this.serverLink = serverLink;
+    }
+
+    public BiostoreConnector(String serverLink, String serverKey)
+    {
+        this.serverLink = serverLink;
+        this.serverKey = serverKey;
+    }
+
+    /**
+     * Check is session exist for user
+     * @param username current user name
+     * @return
+     */
+    public boolean checkSession(String username)
+    {
+        return sessionCookies.containsKey( username );
+    }
+
+    /**
+     * Request biostore server using HTTPS protocol
+     * @param username current user name
+     * @param action name of biostore action
+     * @param parameters action parameters
+     * @return request result as JSON object
+     */
+    public @Nonnull JsonObject askServer(String username, String action, Map<String, String> parameters)
+    {
+        //TODO: check if network configuration is necessary
+        try
+        {
+            StringBuilder url = new StringBuilder( serverLink ).append( "?action=" ).append( encodeURL( action ) );
+            if( serverKey != null )
+            {
+                url.append( "&serverName=" ).append( encodeURL( serverKey ) );
+            }
+            if( parameters != null )
+            {
+                for( Map.Entry<String, String> entry : parameters.entrySet() )
+                {
+                    url.append( "&" ).append( entry.getKey() ).append( "=" ).append( encodeURL( entry.getValue() ) );
+                }
+            }
+            URLConnection urlc = new URL( url.toString() ).openConnection();
+            urlc.setUseCaches( false ); // Don't look at possibly cached data
+            final int TIMEOUT_TEN_MINUTES = 10 * 60 * 1000;
+            urlc.setConnectTimeout( TIMEOUT_TEN_MINUTES );
+            urlc.setReadTimeout( TIMEOUT_TEN_MINUTES );
+            String oldCookies = username == null ? null : sessionCookies.get( username );
+            if( oldCookies != null )
+            {
+                //set cookie for session support
+                urlc.setRequestProperty( "Cookie", oldCookies );
+            }
+            urlc.connect();
+
+            //read cookies from server response
+            List<String> cookies = urlc.getHeaderFields().get( "Set-Cookie" );
+            if( cookies != null )
+            {
+                String cookieHeader = cookies.stream().map( cookie -> cookie.split( ";" )[0] ).collect( Collectors.joining( "; " ) );
+                if( username != null )
+                    sessionCookies.put( username, cookieHeader );
+            }
+
+            JsonObject jsonObj = Json.parse( readAsString( urlc.getInputStream() ) ).asObject();
+            if( jsonObj == null )
+                throw new Exception( "Cannot parse server response" );
+            return jsonObj;
+        }
+        catch( Exception e )
+        {
+            throw new RuntimeException( "Error during connection to server", e ); //TODO: rework
+        }
+    }
+
+    public static String encodeURL(String src)
+    {
+        try
+        {
+            return URLEncoder.encode( src, "UTF-8" );
+        }
+        catch( UnsupportedEncodingException e )
+        {
+            throw new RuntimeException( "Incorrect symbols in URL", e ); //TODO: rework
+        }
+    }
+
+    private static String readAsString(InputStream src) throws IOException
+    {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        final int BUFFER_SIZE = 64 * 1024;
+        try( BufferedOutputStream bos = new BufferedOutputStream( baos );
+                BufferedInputStream bis = src instanceof BufferedInputStream ? (BufferedInputStream)src : new BufferedInputStream( src ) )
+        {
+
+            byte[] buffer = new byte[BUFFER_SIZE];
+            int len;
+
+            while( ( len = bis.read( buffer ) ) != -1 )
+            {
+                bos.write( buffer, 0, len );
+            }
+        }
+        return baos.toString( "UTF-8" );
+    }
+}
