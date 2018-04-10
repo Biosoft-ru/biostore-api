@@ -56,8 +56,11 @@ public class DefaultConnectionProvider
                 String[] products = getProducts( response ).toArray( String[]::new );
                 UserPermissions result = new UserPermissions( username, password, products, getLimits( response ) );
                 initPermissions( result, response );
-                return arrayOfObjects( response.get( "permissions" ) ).map( obj -> obj.get( "path" ).asString() ).filter( this::isProjectPath )
-                        .map( this::getProjectName ).collect( Collectors.toList() );
+                return arrayOfObjects( response.get( "permissions" ) )
+                        .map( obj -> obj.get( "path" ).asString() )
+                        .filter( this::isProjectPath )
+                        .map( this::getProjectName )
+                        .collect( Collectors.toList() );
             }
             else
             {
