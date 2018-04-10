@@ -10,7 +10,7 @@ import static org.junit.Assert.*;
 public class DefaultConnectionProviderTest
 {
     @Test
-    public void authorize() throws Exception
+    public void authorize()
     {
         DefaultConnectionProvider test = new DefaultConnectionProvider("biblio.biouml.org");
         UserPermissions authorize = test.authorize("", "", null);
@@ -24,4 +24,11 @@ public class DefaultConnectionProviderTest
         assertEquals("Demo", projectList.get(0));
     }
 
+    @Test(expected = SecurityException.class)
+    public void errorLogin()
+    {
+        DefaultConnectionProvider test = new DefaultConnectionProvider("biblio.biouml.org");
+
+        test.authorize("errorName", "", null);
+    }
 }
