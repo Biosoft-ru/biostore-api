@@ -54,8 +54,8 @@ public class UserPermissions
         this.user = user;
         this.password = password;
         this.dbToPermission = new Hashtable<>();
-        this.products = products == null ? Collections.<String>emptySet() : new HashSet<>(Arrays.asList(products));
-        this.limits = limits == null ? Collections.<String, Long>emptyMap() : new HashMap<>(limits);
+        this.products = products == null ? Collections.emptySet() : new HashSet<>(Arrays.asList(products));
+        this.limits = limits == null ? Collections.emptyMap() : new HashMap<>(limits);
         updateExpirationTime();
     }
 
