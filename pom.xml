@@ -4,7 +4,7 @@
 
 	<groupId>ru.biosoft</groupId>
 	<artifactId>biostore-api</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<url>https://bio-store.org</url>
 
