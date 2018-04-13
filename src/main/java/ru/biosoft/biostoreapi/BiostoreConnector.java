@@ -3,11 +3,12 @@ package ru.biosoft.biostoreapi;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
@@ -73,19 +74,23 @@ public class BiostoreConnector
         //TODO: check if network configuration is necessary
         try
         {
-            StringBuilder url = new StringBuilder( serverLink ).append( "?action=" ).append( encodeURL( action ) );
+            StringBuilder urlParameters = new StringBuilder();
+            urlParameters.append( "action=" ).append( encodeURL( action ) );
             if( serverKey != null )
             {
-                url.append( "&serverName=" ).append( encodeURL( serverKey ) );
+                urlParameters.append( "&serverName=" ).append( encodeURL( serverKey ) );
             }
             if( parameters != null )
             {
                 for( Map.Entry<String, String> entry : parameters.entrySet() )
                 {
-                    url.append( "&" ).append( entry.getKey() ).append( "=" ).append( encodeURL( entry.getValue() ) );
+                    urlParameters.append( "&" ).append( entry.getKey() ).append( "=" ).append( encodeURL( entry.getValue() ) );
                 }
             }
-            URLConnection urlc = new URL( url.toString() ).openConnection();
+
+            HttpURLConnection urlc = (HttpURLConnection) new URL( serverLink ).openConnection();
+            urlc.setRequestMethod("POST");
+
             urlc.setUseCaches( false ); // Don't look at possibly cached data
             final int TIMEOUT_TEN_MINUTES = 10 * 60 * 1000;
             urlc.setConnectTimeout( TIMEOUT_TEN_MINUTES );
@@ -96,7 +101,12 @@ public class BiostoreConnector
                 //set cookie for session support
                 urlc.setRequestProperty( "Cookie", oldCookies );
             }
-            urlc.connect();
+
+            urlc.setDoOutput(true);
+            DataOutputStream wr = new DataOutputStream(urlc.getOutputStream());
+            wr.writeBytes(urlParameters.toString());
+            wr.flush();
+            wr.close();
 
             //read cookies from server response
             List<String> cookies = urlc.getHeaderFields().get( "Set-Cookie" );
