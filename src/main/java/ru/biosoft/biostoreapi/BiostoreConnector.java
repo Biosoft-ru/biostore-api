@@ -102,11 +102,12 @@ public class BiostoreConnector
                 urlc.setRequestProperty( "Cookie", oldCookies );
             }
 
-            urlc.setDoOutput(true);
-            DataOutputStream wr = new DataOutputStream(urlc.getOutputStream());
-            wr.writeBytes(urlParameters.toString());
-            wr.flush();
-            wr.close();
+            urlc.setDoOutput( true );
+            try( DataOutputStream wr = new DataOutputStream( urlc.getOutputStream() ) )
+            {
+                wr.writeBytes( urlParameters.toString() );
+                wr.flush();
+            }
 
             //read cookies from server response
             List<String> cookies = urlc.getHeaderFields().get( "Set-Cookie" );
