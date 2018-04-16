@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nonnull;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 
@@ -69,7 +68,7 @@ public class BiostoreConnector
      * @param parameters action parameters
      * @return request result as JSON object
      */
-    public @Nonnull JsonObject askServer(String username, String action, Map<String, String> parameters)
+    public JsonObject askServer(String username, String action, Map<String, String> parameters)
     {
         //TODO: check if network configuration is necessary
         try
