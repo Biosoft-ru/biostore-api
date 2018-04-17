@@ -16,9 +16,22 @@ public class DefaultConnectionProvider
 {
     protected static final Logger log = Logger.getLogger( DefaultConnectionProvider.class.getName() );
 
+    public static final String ACTION_LOGIN = "login";
+    public static final String ACTION_CREATE_GROUP = "createGroup";
+    public static final String ACTION_SET_GROUP_PERMISSION = "setGroupPermission";
+
     public static final String TYPE_OK = "ok";
     public static final String TYPE_ERROR = "error";
     public static final String TYPE_NEED_LOGIN = "unauthorized";
+
+    public static final String ATTR_USERNAME = "username";
+    public static final String ATTR_PASSWORD = "password";
+    public static final String ATTR_IP = "ip";
+    public static final String ATTR_SUDO = "sudo";
+
+    public static final String ATTR_GROUP = "group";
+    public static final String ATTR_MODULE = "module";
+    public static final String ATTR_GROUP_USER = "user";
 
     public static final String ATTR_TYPE = "type";
     public static final String ATTR_MESSAGE = "message";
@@ -43,11 +56,11 @@ public class DefaultConnectionProvider
     {
         Map<String, String> parameters = new HashMap<>();
         String[] fields = username.split( "\\$" );
-        parameters.put( "username", fields[0] );
-        parameters.put( "password", password );
+        parameters.put( ATTR_USERNAME, fields[0] );
+        parameters.put( ATTR_PASSWORD, password );
         if( fields.length > 1 )
-            parameters.put( "sudo", fields[1] );
-        JsonObject response = biostoreConnector.askServer( username, "login", parameters );
+            parameters.put( ATTR_SUDO, fields[1] );
+        JsonObject response = biostoreConnector.askServer( username, ACTION_LOGIN, parameters );
         try
         {
             String status = response.get( ATTR_TYPE ).asString();
@@ -82,6 +95,7 @@ public class DefaultConnectionProvider
         }
     }
 
+    //TODO: rework
     private boolean isProjectPath(String path)
     {
         return path.startsWith( "data/Collaboration/" ) || path.startsWith( "data/Projects/" );
@@ -96,13 +110,13 @@ public class DefaultConnectionProvider
         UserPermissions result = null;
         Map<String, String> parameters = new HashMap<>();
         String[] fields = username.split( "\\$" );
-        parameters.put( "username", fields[0] );
-        parameters.put( "password", password );
+        parameters.put( ATTR_USERNAME, fields[0] );
+        parameters.put( ATTR_PASSWORD, password );
         if( remoteAddress != null )
-            parameters.put( "ip", remoteAddress );
+            parameters.put( ATTR_IP, remoteAddress );
         if( fields.length > 1 )
-            parameters.put( "sudo", fields[1] );
-        JsonObject response = biostoreConnector.askServer( username, "login", parameters );
+            parameters.put( ATTR_SUDO, fields[1] );
+        JsonObject response = biostoreConnector.askServer( username, ACTION_LOGIN, parameters );
         try
         {
             String status = response.get( ATTR_TYPE ).asString();
@@ -133,13 +147,13 @@ public class DefaultConnectionProvider
         return result;
     }
 
-    private Map<String, Long> getLimits(JsonObject response)
+    private static Map<String, Long> getLimits(JsonObject response)
     {
         return arrayOfObjects( response.get( "limits" ) )
                 .collect( Collectors.toMap( limit -> limit.get( "name" ).asString(), limit -> limit.get( "value" ).asLong() ) );
     }
 
-    private Stream<String> getProducts(JsonObject response)
+    private static Stream<String> getProducts(JsonObject response)
     {
         return arrayOfObjects( response.get( "products" ) ).map( val -> val.get( "name" ).asString() );
     }
