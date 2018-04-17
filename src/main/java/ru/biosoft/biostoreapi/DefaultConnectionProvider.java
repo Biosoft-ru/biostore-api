@@ -181,4 +181,58 @@ public class DefaultConnectionProvider
     {
         return value.asArray().values().stream().map( JsonValue::asObject );
     }
+
+    public void createProjectWithPermissions(String username, String projectName, int permission) throws Exception
+    {
+        try
+        {
+            createGroup( username, projectName );
+            setGroupPermission( username, projectName, "data/Collaboration/" + projectName, permission );
+        }
+        catch( Exception e )
+        {
+            throw new Exception( "While creating project '" + projectName + "': " + e.getMessage(), e );
+        }
+    }
+
+    private void createGroup(String username, String groupName) throws Exception
+    {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put( ATTR_GROUP, groupName );
+        parameters.put( ATTR_GROUP_USER, username );
+        JsonObject response = biostoreConnector.askServer( username, ACTION_CREATE_GROUP, parameters );
+        try
+        {
+            checkResponse( response );
+        }
+        catch( Exception e )
+        {
+            throw new Exception( "While creating group " + groupName + ": " + e.getMessage(), e );
+        }
+    }
+
+    private boolean setGroupPermission(String username, String groupName, String collectionName, int permission)
+    {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put( ATTR_GROUP, groupName );
+        parameters.put( ATTR_MODULE, collectionName );
+        parameters.put( ATTR_PERMISSION, String.valueOf( permission ) );
+        JsonObject response = biostoreConnector.askServer( username, ACTION_SET_GROUP_PERMISSION, parameters );
+        try
+        {
+            checkResponse( response );
+            return true;
+        }
+        catch( Exception e )
+        {
+            log.log( Level.SEVERE, "While adding permissions to " + collectionName + " for " + groupName + ": " + e.getMessage() );
+        }
+        return false;
+    }
+
+    private static void checkResponse(JsonObject response) throws Exception
+    {
+        if( !response.get( ATTR_TYPE ).asString().equals( TYPE_OK ) )
+            throw new Exception( response.get( ATTR_MESSAGE ).asString() );
+    }
 }
