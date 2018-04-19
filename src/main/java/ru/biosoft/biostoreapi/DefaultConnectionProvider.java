@@ -199,7 +199,7 @@ public class DefaultConnectionProvider
         if( !jsonReponse.get( ATTR_TYPE ).asString().equals( TYPE_OK ) )
         {
             log.severe( jsonReponse.get( ATTR_MESSAGE ).asString() );
-            throw new Exception( jsonReponse.get( ATTR_MESSAGE ).asString() );
+            throw new SecurityException( jsonReponse.get( ATTR_MESSAGE ).asString() );
         }
     }
 
@@ -212,7 +212,10 @@ public class DefaultConnectionProvider
             String status = response.get( ATTR_TYPE ).asString();
             if( status.equals( TYPE_OK ) )
             {
-                return response.get( ATTR_JWTOKEN ).asString();
+                JsonValue jsonValue = response.get( ATTR_JWTOKEN );
+                if( jsonValue == null )
+                    throw new SecurityException( "Specified server does not support json web tokens." );
+                return jsonValue.asString();
             }
             else
             {
