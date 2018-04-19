@@ -55,19 +55,20 @@ public class DefaultConnectionProvider
         parameters.put( ATTR_PASSWORD, password );
         if( fields.length > 1 )
             parameters.put( ATTR_SUDO, fields[1] );
-        JsonObject response = biostoreConnector.askServer( username, ACTION_LOGIN, parameters );
+        return getProjectList( biostoreConnector, username, parameters );
+    }
+    private static List<String> getProjectList(BiostoreConnector bc, String username, Map<String, String> parameters)
+    {
+        JsonObject response = bc.askServer( username, ACTION_LOGIN, parameters );
         try
         {
             String status = response.get( ATTR_TYPE ).asString();
             if( status.equals( TYPE_OK ) )
             {
-                String[] products = getProducts( response ).toArray( String[]::new );
-                UserPermissions result = new UserPermissions( username, password, products, getLimits( response ) );
-                initPermissions( result, response );
                 return arrayOfObjects( response.get( "permissions" ) )
                         .map( obj -> obj.get( "path" ).asString() )
-                        .filter( this::isProjectPath )
-                        .map( this::getProjectName )
+                        .filter( DefaultConnectionProvider::isProjectPath )
+                        .map( DefaultConnectionProvider::getProjectName )
                         .collect( Collectors.toList() );
             }
             else
@@ -91,11 +92,11 @@ public class DefaultConnectionProvider
     }
 
     //TODO: rework
-    private boolean isProjectPath(String path)
+    private static boolean isProjectPath(String path)
     {
         return path.startsWith( "data/Collaboration/" ) || path.startsWith( "data/Projects/" );
     }
-    private String getProjectName(String path)
+    private static String getProjectName(String path)
     {
         return path.replace( "data/Collaboration/", "" ).replace( "data/Projects/", "" );
     }
