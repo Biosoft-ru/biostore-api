@@ -17,11 +17,26 @@ public class DefaultConnectionProviderTest
 
         assertEquals(1, authorize.getDbToPermission().size());
         assertEquals(3, authorize.getDbToPermission().get("data/Collaboration/Demo").getPermissions());
+    }
 
-        List<String> projectList = test.getProjectList("", "");
+    @Test
+    public void projectList()
+    {
+        DefaultConnectionProvider test = new DefaultConnectionProvider( "biblio.biouml.org" );
+        List<String> projectList = test.getProjectList( "", "" );
 
-        assertEquals(1, projectList.size());
-        assertEquals("Demo", projectList.get(0));
+        assertEquals( 1, projectList.size() );
+        assertEquals( "Demo", projectList.get( 0 ) );
+    }
+
+    @Test
+    public void projectListWithToken()
+    {
+        DefaultConnectionProvider test = new DefaultConnectionProvider( "biblio.biouml.org" );
+        List<String> projectList = test.getProjectListWithToken( "", test.getJWToken( "", "" ) );
+
+        assertEquals( 1, projectList.size() );
+        assertEquals( "Demo", projectList.get( 0 ) );
     }
 
     @Test(expected = SecurityException.class)
