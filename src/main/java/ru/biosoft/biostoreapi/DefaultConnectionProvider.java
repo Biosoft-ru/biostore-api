@@ -17,12 +17,11 @@ public class DefaultConnectionProvider
     protected static final Logger log = Logger.getLogger( DefaultConnectionProvider.class.getName() );
 
     public static final String ACTION_LOGIN = "login";
-    public static final String ACTION_CREATE_GROUP = "createGroup";
-    public static final String ACTION_SET_GROUP_PERMISSION = "setGroupPermission";
+    public static final String ACTION_CREATE_PROJECT = "createProject";
 
     public static final String TYPE_OK = "ok";
-    public static final String TYPE_ERROR = "error";
-    public static final String TYPE_NEED_LOGIN = "unauthorized";
+    //    public static final String TYPE_ERROR = "error";
+    //    public static final String TYPE_NEED_LOGIN = "unauthorized";
 
     public static final String ATTR_USERNAME = "username";
     public static final String ATTR_PASSWORD = "password";
@@ -36,10 +35,6 @@ public class DefaultConnectionProvider
     public static final String ATTR_TYPE = "type";
     public static final String ATTR_MESSAGE = "message";
     public static final String ATTR_PERMISSION = "permission";
-    public static final String ATTR_INVALIDATE = "invalidate";
-    public static final String ATTR_INFO = "info";
-
-    protected static final String guestUserName = "anonymous";
 
     private static final long MAX_PERMISSION_TIME = 1000L * 60 * 60 * 24 * 365; // 365 days
 
@@ -182,57 +177,21 @@ public class DefaultConnectionProvider
         return value.asArray().values().stream().map( JsonValue::asObject );
     }
 
-    public void createProjectWithPermissions(String username, String projectName, int permission) throws Exception
-    {
-        try
-        {
-            createGroup( username, projectName );
-            setGroupPermission( username, projectName, "data/Collaboration/" + projectName, permission );
-        }
-        catch( Exception e )
-        {
-            throw new Exception( "While creating project '" + projectName + "': " + e.getMessage(), e );
-        }
-    }
-
-    private void createGroup(String username, String groupName) throws Exception
+    public void createProjectWithPermissions(String username, String password, String projectName, int permission) throws Exception
     {
         Map<String, String> parameters = new HashMap<>();
-        parameters.put( ATTR_GROUP, groupName );
+        parameters.put( ATTR_USERNAME, username );
+        parameters.put( ATTR_PASSWORD, password );
         parameters.put( ATTR_GROUP_USER, username );
-        JsonObject response = biostoreConnector.askServer( username, ACTION_CREATE_GROUP, parameters );
-        try
-        {
-            checkResponse( response );
-        }
-        catch( Exception e )
-        {
-            throw new Exception( "While creating group " + groupName + ": " + e.getMessage(), e );
-        }
-    }
-
-    private boolean setGroupPermission(String username, String groupName, String collectionName, int permission)
-    {
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put( ATTR_GROUP, groupName );
-        parameters.put( ATTR_MODULE, collectionName );
+        parameters.put( ATTR_GROUP, projectName );
+        parameters.put( ATTR_MODULE, "data/Collaboration/" + projectName );
         parameters.put( ATTR_PERMISSION, String.valueOf( permission ) );
-        JsonObject response = biostoreConnector.askServer( username, ACTION_SET_GROUP_PERMISSION, parameters );
-        try
-        {
-            checkResponse( response );
-            return true;
-        }
-        catch( Exception e )
-        {
-            log.log( Level.SEVERE, "While adding permissions to " + collectionName + " for " + groupName + ": " + e.getMessage() );
-        }
-        return false;
-    }
 
-    private static void checkResponse(JsonObject response) throws Exception
-    {
-        if( !response.get( ATTR_TYPE ).asString().equals( TYPE_OK ) )
-            throw new Exception( response.get( ATTR_MESSAGE ).asString() );
+        JsonObject jsonReponse = biostoreConnector.askServer( username, ACTION_CREATE_PROJECT, parameters );
+        if( !jsonReponse.get( ATTR_TYPE ).asString().equals( TYPE_OK ) )
+        {
+            log.severe( jsonReponse.get( ATTR_MESSAGE ).asString() );
+            throw new Exception( jsonReponse.get( ATTR_MESSAGE ).asString() );
+        }
     }
 }
