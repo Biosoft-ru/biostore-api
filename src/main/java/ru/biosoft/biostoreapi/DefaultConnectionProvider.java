@@ -49,14 +49,10 @@ public class DefaultConnectionProvider
 
     public List<String> getProjectList(String username, String password) throws SecurityException
     {
-        Map<String, String> parameters = new HashMap<>();
-        String[] fields = username.split( "\\$" );
-        parameters.put( ATTR_USERNAME, fields[0] );
-        parameters.put( ATTR_PASSWORD, password );
-        if( fields.length > 1 )
-            parameters.put( ATTR_SUDO, fields[1] );
+        Map<String, String> parameters = prepareLoginParametersMap( username, password );
         return getProjectList( biostoreConnector, username, parameters );
     }
+
     private static List<String> getProjectList(BiostoreConnector bc, String username, Map<String, String> parameters)
     {
         JsonObject response = bc.askServer( username, ACTION_LOGIN, parameters );
@@ -103,15 +99,9 @@ public class DefaultConnectionProvider
 
     public UserPermissions authorize(String username, String password, String remoteAddress) throws SecurityException
     {
-        UserPermissions result = null;
-        Map<String, String> parameters = new HashMap<>();
-        String[] fields = username.split( "\\$" );
-        parameters.put( ATTR_USERNAME, fields[0] );
-        parameters.put( ATTR_PASSWORD, password );
+        Map<String, String> parameters = prepareLoginParametersMap( username, password );
         if( remoteAddress != null )
             parameters.put( ATTR_IP, remoteAddress );
-        if( fields.length > 1 )
-            parameters.put( ATTR_SUDO, fields[1] );
         JsonObject response = biostoreConnector.askServer( username, ACTION_LOGIN, parameters );
         try
         {
@@ -119,8 +109,9 @@ public class DefaultConnectionProvider
             if( status.equals( TYPE_OK ) )
             {
                 String[] products = getProducts( response ).toArray( String[]::new );
-                result = new UserPermissions( username, password, products, getLimits( response ) );
+                UserPermissions result = new UserPermissions( username, password, products, getLimits( response ) );
                 initPermissions( result, response );
+                return result;
             }
             else
             {
@@ -140,7 +131,6 @@ public class DefaultConnectionProvider
             log.log( Level.SEVERE, "Invalid JSON response", e );
             throw new SecurityException( "Error communicating to authentication server" );
         }
-        return result;
     }
 
     private static Map<String, Long> getLimits(JsonObject response)
@@ -178,11 +168,20 @@ public class DefaultConnectionProvider
         return value.asArray().values().stream().map( JsonValue::asObject );
     }
 
-    public void createProjectWithPermissions(String username, String password, String projectName, int permission) throws Exception
+    private static Map<String, String> prepareLoginParametersMap(String username, String password)
     {
         Map<String, String> parameters = new HashMap<>();
-        parameters.put( ATTR_USERNAME, username );
+        String[] fields = username.split( "\\$" );
+        parameters.put( ATTR_USERNAME, fields[0] );
         parameters.put( ATTR_PASSWORD, password );
+        if( fields.length > 1 )
+            parameters.put( ATTR_SUDO, fields[1] );
+        return parameters;
+    }
+
+    public void createProjectWithPermissions(String username, String password, String projectName, int permission) throws Exception
+    {
+        Map<String, String> parameters = prepareLoginParametersMap( username, password );
         parameters.put( ATTR_GROUP_USER, username );
         parameters.put( ATTR_GROUP, projectName );
         parameters.put( ATTR_MODULE, "data/Collaboration/" + projectName );
