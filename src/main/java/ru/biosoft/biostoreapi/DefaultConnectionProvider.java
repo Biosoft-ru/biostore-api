@@ -48,6 +48,13 @@ public class DefaultConnectionProvider
         biostoreConnector = BiostoreConnector.getDefaultConnector( serverName );
     }
 
+    public List<String> getProjectListWithToken(String username, String jwToken) throws SecurityException
+    {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put( ATTR_JWTOKEN, jwToken );
+        return getProjectList( biostoreConnector, username, parameters );
+    }
+
     public List<String> getProjectList(String username, String password) throws SecurityException
     {
         Map<String, String> parameters = prepareLoginParametersMap( username, password );
