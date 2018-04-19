@@ -23,6 +23,7 @@ public class DefaultConnectionProvider
     //    public static final String TYPE_ERROR = "error";
     //    public static final String TYPE_NEED_LOGIN = "unauthorized";
 
+    public static final String ATTR_JWTOKEN = "jwtoken";
     public static final String ATTR_USERNAME = "username";
     public static final String ATTR_PASSWORD = "password";
     public static final String ATTR_IP = "ip";
@@ -192,6 +193,37 @@ public class DefaultConnectionProvider
         {
             log.severe( jsonReponse.get( ATTR_MESSAGE ).asString() );
             throw new Exception( jsonReponse.get( ATTR_MESSAGE ).asString() );
+        }
+    }
+
+    public String getJWToken(String username, String password) throws SecurityException
+    {
+        Map<String, String> parameters = prepareLoginParametersMap( username, password );
+        JsonObject response = biostoreConnector.askServer( username, ACTION_LOGIN, parameters );
+        try
+        {
+            String status = response.get( ATTR_TYPE ).asString();
+            if( status.equals( TYPE_OK ) )
+            {
+                return response.get( ATTR_JWTOKEN ).asString();
+            }
+            else
+            {
+                if( response.get( ATTR_MESSAGE ) != null )
+                {
+                    log.severe( "While authorizing " + username + ":" + response.get( ATTR_MESSAGE ) );
+                    throw new SecurityException( response.get( ATTR_MESSAGE ).asString() );
+                }
+                else
+                {
+                    throw new SecurityException( response.toString() );
+                }
+            }
+        }
+        catch( UnsupportedOperationException e )
+        {
+            log.log( Level.SEVERE, "Invalid JSON response", e );
+            throw new SecurityException( "Error communicating to authentication server" );
         }
     }
 }
