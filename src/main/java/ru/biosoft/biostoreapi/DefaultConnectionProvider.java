@@ -39,13 +39,16 @@ public class DefaultConnectionProvider
 
     private static final long MAX_PERMISSION_TIME = 1000L * 60 * 60 * 24 * 365; // 365 days
 
-    protected String serverName;
     protected BiostoreConnector biostoreConnector;
 
     public DefaultConnectionProvider(String serverName)
     {
-        this.serverName = serverName;//TODO: read from props
         biostoreConnector = BiostoreConnector.getDefaultConnector( serverName );
+    }
+
+    public DefaultConnectionProvider(String bioStoreUrl, String serverName)
+    {
+        biostoreConnector = BiostoreConnector.getConnector( bioStoreUrl, serverName );
     }
 
     public List<String> getProjectListWithToken(String username, String jwToken) throws SecurityException

@@ -35,17 +35,18 @@ public class BiostoreConnector
     {
         return BIOSTORE_DEFAULT_URL;
     }
-    public static BiostoreConnector getDefaultConnector(String serverName)
+
+    static BiostoreConnector getDefaultConnector(String serverName)
     {
         return new BiostoreConnector( BIOSTORE_DEFAULT_URL + "/permission", serverName );
     }
 
-    public BiostoreConnector(String serverLink)
+    static BiostoreConnector getConnector(String bioStoreUrl, String serverName)
     {
-        this.serverLink = serverLink;
+        return new BiostoreConnector( bioStoreUrl + "/permission", serverName );
     }
 
-    public BiostoreConnector(String serverLink, String serverKey)
+    private BiostoreConnector(String serverLink, String serverKey)
     {
         this.serverLink = serverLink;
         this.serverKey = serverKey;
