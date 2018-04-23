@@ -9,10 +9,12 @@ import static org.junit.Assert.*;
 
 public class DefaultConnectionProviderTest
 {
+    public static final String BIOSTORE_SERVER_NAME = "biblio.biouml.org";
+
     @Test
     public void authorize()
     {
-        DefaultConnectionProvider test = new DefaultConnectionProvider("biblio.biouml.org");
+        DefaultConnectionProvider test = new DefaultConnectionProvider(BIOSTORE_SERVER_NAME);
         UserPermissions authorize = test.authorize("", "", null);
 
         assertEquals(1, authorize.getDbToPermission().size());
@@ -22,7 +24,7 @@ public class DefaultConnectionProviderTest
     @Test
     public void projectList()
     {
-        DefaultConnectionProvider test = new DefaultConnectionProvider( "biblio.biouml.org" );
+        DefaultConnectionProvider test = new DefaultConnectionProvider(BIOSTORE_SERVER_NAME);
         List<String> projectList = test.getProjectList( "", "" );
 
         assertEquals( 1, projectList.size() );
@@ -32,7 +34,7 @@ public class DefaultConnectionProviderTest
     @Test
     public void projectListWithToken()
     {
-        DefaultConnectionProvider test = new DefaultConnectionProvider( "biblio.biouml.org" );
+        DefaultConnectionProvider test = new DefaultConnectionProvider(BIOSTORE_SERVER_NAME);
         List<String> projectList = test.getProjectListWithToken( "", test.getJWToken( "", "" ) );
 
         assertEquals( 1, projectList.size() );
@@ -42,7 +44,7 @@ public class DefaultConnectionProviderTest
     @Test(expected = SecurityException.class)
     public void errorLogin()
     {
-        DefaultConnectionProvider test = new DefaultConnectionProvider("biblio.biouml.org");
+        DefaultConnectionProvider test = new DefaultConnectionProvider(BIOSTORE_SERVER_NAME);
 
         test.authorize("errorName", "", null);
     }
