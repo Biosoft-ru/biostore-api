@@ -51,20 +51,20 @@ public class DefaultConnectionProvider
         biostoreConnector = BiostoreConnector.getConnector( bioStoreUrl, serverName );
     }
 
-    public List<String> getProjectListWithToken(String username, String jwToken) throws SecurityException
+    public List<Project> getProjectListWithToken(String username, String jwToken) throws SecurityException
     {
         Map<String, String> parameters = new HashMap<>();
         parameters.put( ATTR_JWTOKEN, jwToken );
         return getProjectList( biostoreConnector, username, parameters );
     }
 
-    public List<String> getProjectList(String username, String password) throws SecurityException
+    public List<Project> getProjectList(String username, String password) throws SecurityException
     {
         Map<String, String> parameters = prepareLoginParametersMap( username, password );
         return getProjectList( biostoreConnector, username, parameters );
     }
 
-    private static List<String> getProjectList(BiostoreConnector bc, String username, Map<String, String> parameters)
+    private static List<Project> getProjectList(BiostoreConnector bc, String username, Map<String, String> parameters)
     {
         JsonObject response = bc.askServer( username, ACTION_LOGIN, parameters );
         try
@@ -73,9 +73,8 @@ public class DefaultConnectionProvider
             if( status.equals( TYPE_OK ) )
             {
                 return arrayOfObjects( response.get( "permissions" ) )
-                        .map( obj -> obj.get( "path" ).asString() )
-                        .filter( DefaultConnectionProvider::isProjectPath )
-                        .map( DefaultConnectionProvider::getProjectName )
+                        .map( Project::createFromJson )
+                        .filter( p -> p != null )
                         .collect( Collectors.toList() );
             }
             else
@@ -96,16 +95,6 @@ public class DefaultConnectionProvider
             log.log( Level.SEVERE, "Invalid JSON response", e );
             throw new SecurityException( "Error communicating to authentication server" );
         }
-    }
-
-    //TODO: rework
-    private static boolean isProjectPath(String path)
-    {
-        return path.startsWith( "data/Collaboration/" ) || path.startsWith( "data/Projects/" );
-    }
-    private static String getProjectName(String path)
-    {
-        return path.replace( "data/Collaboration/", "" ).replace( "data/Projects/", "" );
     }
 
     public UserPermissions authorize(String username, String password, String remoteAddress) throws SecurityException

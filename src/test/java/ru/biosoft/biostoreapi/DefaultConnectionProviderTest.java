@@ -26,10 +26,10 @@ public class DefaultConnectionProviderTest
     public void projectList()
     {
         DefaultConnectionProvider test = new DefaultConnectionProvider(BIOSTORE_SERVER_NAME);
-        List<String> projectList = test.getProjectList( "", "" );
+        List<Project> projectList = test.getProjectList( "", "" );
 
         assertEquals( 1, projectList.size() );
-        assertEquals( "Demo", projectList.get( 0 ) );
+        assertEquals( "Demo (Info/Read)", projectList.get( 0 ).toString() );
     }
 
     @Test
@@ -37,10 +37,10 @@ public class DefaultConnectionProviderTest
     public void projectListWithToken()
     {
         DefaultConnectionProvider test = new DefaultConnectionProvider(BIOSTORE_SERVER_NAME);
-        List<String> projectList = test.getProjectListWithToken( "", test.getJWToken( "", "" ) );
+        List<Project> projectList = test.getProjectListWithToken( "", test.getJWToken( "", "" ) );
 
         assertEquals( 1, projectList.size() );
-        assertEquals( "Demo", projectList.get( 0 ) );
+        assertEquals( "Demo (Info/Read)", projectList.get( 0 ).toString() );
     }
 
     @Test(expected = SecurityException.class)
