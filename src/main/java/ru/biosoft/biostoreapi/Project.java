@@ -12,35 +12,40 @@ public class Project
 
     private final String projectName;
     private final int permissions;
-    private final List<String> permStrList = new ArrayList<>();
 
-    public Project(String projectName, int permission)
+    public Project(String projectName, int permissions)
     {
         this.projectName = projectName;
-        this.permissions = permission;
-
-        if( permission == Permission.ALL )
-        {
-            permStrList.add( "All" );
-            return;
-        }
-
-        if( ( permission & Permission.INFO ) != 0 )
-            permStrList.add( "Info" );
-        if( ( permission & Permission.READ ) != 0 )
-            permStrList.add( "Read" );
-        if( ( permission & Permission.WRITE ) != 0 )
-            permStrList.add( "Write" );
-        if( ( permission & Permission.DELETE ) != 0 )
-            permStrList.add( "Delete" );
-        if( ( permission & Permission.ADMIN ) != 0 )
-            permStrList.add( "Admin" );
+        this.permissions = permissions;
     }
 
+    private String permissionsStr;
     @Override
     public String toString()
     {
-        return projectName + " (" + String.join( "/", permStrList ) + ")";
+        if( permissionsStr == null )
+        {
+            List<String> permStrList = new ArrayList<>();
+            if( permissions == Permission.ALL )
+            {
+                permStrList.add( "All" );
+            }
+            else
+            {
+                if( ( permissions & Permission.INFO ) != 0 )
+                    permStrList.add( "Info" );
+                if( ( permissions & Permission.READ ) != 0 )
+                    permStrList.add( "Read" );
+                if( ( permissions & Permission.WRITE ) != 0 )
+                    permStrList.add( "Write" );
+                if( ( permissions & Permission.DELETE ) != 0 )
+                    permStrList.add( "Delete" );
+                if( ( permissions & Permission.ADMIN ) != 0 )
+                    permStrList.add( "Admin" );
+            }
+            permissionsStr = permStrList.isEmpty() ? "" : String.join( "/", permStrList );
+        }
+        return projectName + " (" + permissionsStr + ")";
     }
 
     public static Project createFromJson(JsonObject obj)
