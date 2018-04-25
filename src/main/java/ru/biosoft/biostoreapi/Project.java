@@ -43,6 +43,21 @@ public class Project
         return projectName + " (" + String.join( "/", permStrList ) + ")";
     }
 
+    public String getProjectName()
+    {
+        return projectName;
+    }
+
+    public int getPermissions()
+    {
+        return permissions;
+    }
+
+    public List<String> getPermStrList()
+    {
+        return permStrList;
+    }
+
     public static Project createFromJson(JsonObject obj)
     {
         String path = obj.getString( "path", "" );
