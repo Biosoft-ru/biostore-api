@@ -43,20 +43,30 @@ public class Project
         return projectName + " (" + String.join( "/", permStrList ) + ")";
     }
 
+    public String getProjectName()
+    {
+        return projectName;
+    }
+
+    public int getPermissions()
+    {
+        return permissions;
+    }
+
     public static Project createFromJson(JsonObject obj)
     {
         String path = obj.getString( "path", "" );
         if( path.isEmpty() || !isProjectPath( path ) )
             return null;
         int permission = obj.getInt( "permissions", 0 );
-        return new Project( getProjectName( path ), permission );
+        return new Project( getProjectNameFromPath( path ), permission );
     }
 
     public static boolean isProjectPath(String path)
     {
         return path.startsWith( "data/Collaboration/" ) || path.startsWith( "data/Projects/" );
     }
-    public static String getProjectName(String path)
+    public static String getProjectNameFromPath(String path)
     {
         return path.replace( "data/Collaboration/", "" ).replace( "data/Projects/", "" );
     }
