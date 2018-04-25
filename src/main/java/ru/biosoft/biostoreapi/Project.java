@@ -53,11 +53,6 @@ public class Project
         return permissions;
     }
 
-    public List<String> getPermStrList()
-    {
-        return permStrList;
-    }
-
     public static Project createFromJson(JsonObject obj)
     {
         String path = obj.getString( "path", "" );
