@@ -187,11 +187,11 @@ public class DefaultConnectionProvider
         parameters.put( ATTR_MODULE, "data/Collaboration/" + projectName );
         parameters.put( ATTR_PERMISSION, String.valueOf( permission ) );
 
-        JsonObject jsonReponse = biostoreConnector.askServer( username, ACTION_CREATE_PROJECT, parameters );
-        if( !jsonReponse.get( ATTR_TYPE ).asString().equals( TYPE_OK ) )
+        JsonObject jsonResponse = biostoreConnector.askServer( username, ACTION_CREATE_PROJECT, parameters );
+        if( !jsonResponse.get( ATTR_TYPE ).asString().equals( TYPE_OK ) )
         {
-            log.severe( jsonReponse.get( ATTR_MESSAGE ).asString() );
-            throw new SecurityException( jsonReponse.get( ATTR_MESSAGE ).asString() );
+            log.severe( jsonResponse.get( ATTR_MESSAGE ).asString() );
+            throw new SecurityException( jsonResponse.get( ATTR_MESSAGE ).asString() );
         }
     }
 
