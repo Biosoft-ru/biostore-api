@@ -1,6 +1,8 @@
 package ru.biosoft.biostoreapi;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.util.List;
 
@@ -37,7 +39,7 @@ public class DefaultConnectionProviderTest
     public void projectListWithToken()
     {
         DefaultConnectionProvider test = new DefaultConnectionProvider(BIOSTORE_SERVER_NAME);
-        List<Project> projectList = test.getProjectListWithToken( "", test.getJWToken( "", "" ) );
+        List<Project> projectList = test.getProjectList( test.getJWToken( "", "" ) );
 
         assertEquals( 1, projectList.size() );
         assertEquals( "Demo (Info/Read)", projectList.get( 0 ).toString() );
@@ -45,9 +47,15 @@ public class DefaultConnectionProviderTest
         assertEquals( 3, projectList.get( 0 ).getPermissions() );
     }
 
-    @Test(expected = SecurityException.class)
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
+    @Test
     public void errorLogin()
     {
+        thrown.expect( SecurityException.class );
+        thrown.expectMessage( "Incorrect email or password" );
+
         DefaultConnectionProvider test = new DefaultConnectionProvider(BIOSTORE_SERVER_NAME);
 
         test.authorize("errorName", "", null);
