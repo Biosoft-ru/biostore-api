@@ -1,5 +1,6 @@
 package ru.biosoft.biostoreapi;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
@@ -9,8 +10,8 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.eclipsesource.json.JsonObject;
-import com.eclipsesource.json.JsonValue;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class DefaultConnectionProvider
 {
@@ -66,14 +67,14 @@ public class DefaultConnectionProvider
 
     private static List<Project> getProjectList(BiostoreConnector bc, String username, Map<String, String> parameters)
     {
-        JsonObject response = bc.askServer( username, ACTION_LOGIN, parameters );
+        JSONObject response = bc.askServer( username, ACTION_LOGIN, parameters );
         try
         {
-            String status = response.get( ATTR_TYPE ).asString();
+            String status = response.getString( ATTR_TYPE );
             if( status.equals( TYPE_OK ) )
             {
-                return arrayOfObjects( response.get( "permissions" ) )
-                        .map( Project::createFromJson )
+                return arrayOfObjects( response.getJSONArray( "permissions" ) )
+                        .map( Project::createFromJSON )
                         .filter( p -> p != null )
                         .collect( Collectors.toList() );
             }
@@ -82,7 +83,7 @@ public class DefaultConnectionProvider
                 if( response.get( ATTR_MESSAGE ) != null )
                 {
                     log.severe( "While authorizing " + username + ":" + response.get( ATTR_MESSAGE ) );
-                    throw new SecurityException( response.get( ATTR_MESSAGE ).asString() );
+                    throw new SecurityException( response.getString( ATTR_MESSAGE ) );
                 }
                 else
                 {
@@ -102,10 +103,10 @@ public class DefaultConnectionProvider
         Map<String, String> parameters = prepareLoginParametersMap( username, password );
         if( remoteAddress != null )
             parameters.put( ATTR_IP, remoteAddress );
-        JsonObject response = biostoreConnector.askServer( username, ACTION_LOGIN, parameters );
+        JSONObject response = biostoreConnector.askServer( username, ACTION_LOGIN, parameters );
         try
         {
-            String status = response.get( ATTR_TYPE ).asString();
+            String status = response.getString( ATTR_TYPE );
             if( status.equals( TYPE_OK ) )
             {
                 String[] products = getProducts( response ).toArray( String[]::new );
@@ -118,7 +119,7 @@ public class DefaultConnectionProvider
                 if( response.get( ATTR_MESSAGE ) != null )
                 {
                     log.severe( "While authorizing " + username + " (" + remoteAddress + "):" + response.get( ATTR_MESSAGE ) );
-                    throw new SecurityException( response.get( ATTR_MESSAGE ).asString() );
+                    throw new SecurityException( response.getString( ATTR_MESSAGE ) );
                 }
                 else
                 {
@@ -133,39 +134,44 @@ public class DefaultConnectionProvider
         }
     }
 
-    private static Map<String, Long> getLimits(JsonObject response)
+    private static Map<String, Long> getLimits(JSONObject response)
     {
-        return arrayOfObjects( response.get( "limits" ) )
-                .collect( Collectors.toMap( limit -> limit.get( "name" ).asString(), limit -> limit.get( "value" ).asLong() ) );
+        return arrayOfObjects( response.getJSONArray( "limits" ) )
+                .collect( Collectors.toMap( limit -> limit.getString( "name" ), limit -> limit.getLong( "value" ) ) );
     }
 
-    private static Stream<String> getProducts(JsonObject response)
+    private static Stream<String> getProducts(JSONObject response)
     {
-        return arrayOfObjects( response.get( "products" ) ).map( val -> val.get( "name" ).asString() );
+        return arrayOfObjects( response.getJSONArray( "products" ) ).map( val -> val.getString( "name" ) );
     }
 
-    private void initPermissions(UserPermissions userPermissions, JsonObject response)
+    private void initPermissions(UserPermissions userPermissions, JSONObject response)
     {
         Hashtable<String, Permission> dbToPermission = userPermissions.getDbToPermission();
         long time = System.currentTimeMillis() + MAX_PERMISSION_TIME;
-        if( response.getBoolean( "admin", false ) )
+        if( response.optBoolean( "admin", false ) )
         {
             dbToPermission.put( "/", new Permission( Permission.ADMIN, userPermissions.getUser(), "", time ) );
         }
         else
         {
-            arrayOfObjects( response.get( "permissions" ) ).forEach( obj -> dbToPermission.put( obj.get( "path" ).asString(),
-                    new Permission( obj.get( "permissions" ).asInt(), userPermissions.getUser(), "", time ) ) );
+            arrayOfObjects( response.getJSONArray( "permissions" ) ).forEach( obj -> dbToPermission.put( obj.getString( "path" ),
+                    new Permission( obj.getInt( "permissions" ), userPermissions.getUser(), "", time ) ) );
         }
         //TODO: rework or remove
-        arrayOfObjects( response.get( "groups" ) ).map( val -> val.get( "name" ).asString() )
+        arrayOfObjects( response.getJSONArray( "groups" ) ).map( val -> val.getString( "name" ) )
                 .forEach( name -> dbToPermission.put( "groups/" + name,
                         new Permission( Permission.READ, userPermissions.getUser(), "", time ) ) );
     }
 
-    public static Stream<JsonObject> arrayOfObjects(JsonValue value)
+    public static Stream<JSONObject> arrayOfObjects(JSONArray value)
     {
-        return value.asArray().values().stream().map( JsonValue::asObject );
+        List<JSONObject> arr = new ArrayList<>();
+        for( int i = 0; i < value.length(); i++ )
+        {
+            arr.add( value.getJSONObject( i ) );
+        }
+        return arr.stream();
     }
 
     private static Map<String, String> prepareLoginParametersMap(String username, String password)
@@ -187,34 +193,34 @@ public class DefaultConnectionProvider
         parameters.put( ATTR_MODULE, "data/Collaboration/" + projectName );
         parameters.put( ATTR_PERMISSION, String.valueOf( permission ) );
 
-        JsonObject jsonResponse = biostoreConnector.askServer( username, ACTION_CREATE_PROJECT, parameters );
-        if( !jsonResponse.get( ATTR_TYPE ).asString().equals( TYPE_OK ) )
+        JSONObject jsonResponse = biostoreConnector.askServer( username, ACTION_CREATE_PROJECT, parameters );
+        if( !TYPE_OK.equals( jsonResponse.getString( ATTR_TYPE ) ) )
         {
-            log.severe( jsonResponse.get( ATTR_MESSAGE ).asString() );
-            throw new SecurityException( jsonResponse.get( ATTR_MESSAGE ).asString() );
+            log.severe( jsonResponse.getString( ATTR_MESSAGE ) );
+            throw new SecurityException( jsonResponse.getString( ATTR_MESSAGE ) );
         }
     }
 
     public String getJWToken(String username, String password) throws SecurityException
     {
         Map<String, String> parameters = prepareLoginParametersMap( username, password );
-        JsonObject response = biostoreConnector.askServer( username, ACTION_LOGIN, parameters );
+        JSONObject response = biostoreConnector.askServer( username, ACTION_LOGIN, parameters );
         try
         {
-            String status = response.get( ATTR_TYPE ).asString();
+            String status = response.getString( ATTR_TYPE );
             if( status.equals( TYPE_OK ) )
             {
-                JsonValue jsonValue = response.get( ATTR_JWTOKEN );
-                if( jsonValue == null )
+                String jwToken = response.getString( ATTR_JWTOKEN );
+                if( jwToken == null )
                     throw new SecurityException( "Specified server does not support json web tokens." );
-                return jsonValue.asString();
+                return jwToken;
             }
             else
             {
                 if( response.get( ATTR_MESSAGE ) != null )
                 {
                     log.severe( "While authorizing " + username + ":" + response.get( ATTR_MESSAGE ) );
-                    throw new SecurityException( response.get( ATTR_MESSAGE ).asString() );
+                    throw new SecurityException( response.getString( ATTR_MESSAGE ) );
                 }
                 else
                 {
