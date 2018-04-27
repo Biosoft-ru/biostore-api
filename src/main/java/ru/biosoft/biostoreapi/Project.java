@@ -3,7 +3,7 @@ package ru.biosoft.biostoreapi;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.eclipsesource.json.JsonObject;
+import org.json.JSONObject;
 
 public class Project
 {
@@ -58,12 +58,12 @@ public class Project
         return permissions;
     }
 
-    public static Project createFromJson(JsonObject obj)
+    public static Project createFromJSON(JSONObject obj)
     {
-        String path = obj.getString( "path", "" );
+        String path = obj.optString( "path", "" );
         if( path.isEmpty() || !isProjectPath( path ) )
             return null;
-        int permission = obj.getInt( "permissions", 0 );
+        int permission = obj.optInt( "permissions", 0 );
         return new Project( getProjectNameFromPath( path ), permission );
     }
 
