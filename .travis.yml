@@ -1,9 +1,4 @@
 language: java
-before_install:
-  - git clone https://github.com/Biosoft-ru/exception.git
-    && cd exception
-    && mvn install -DskipTests=true -Dmaven.javadoc.skip=true
-    && cd ../
 install:
   - mvn test-compile -Dmaven.javadoc.skip=true -B -V
 after_success:
