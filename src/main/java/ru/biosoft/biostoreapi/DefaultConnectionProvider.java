@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import ru.biosoft.biostoreapi.impl.BiostoreConnectorImpl;
 
 public class DefaultConnectionProvider
 {
@@ -42,14 +43,16 @@ public class DefaultConnectionProvider
 
     protected BiostoreConnector biostoreConnector;
 
+    private static final String BIOSTORE_DEFAULT_URL = "https://bio-store.org/biostore";
+
     public DefaultConnectionProvider(String serverName)
     {
-        biostoreConnector = BiostoreConnector.getDefaultConnector( serverName );
+        biostoreConnector = new BiostoreConnectorImpl( BIOSTORE_DEFAULT_URL + "/permission", serverName );
     }
 
-    public DefaultConnectionProvider(String bioStoreUrl, String serverName)
+    public DefaultConnectionProvider(BiostoreConnector biostoreConnector)
     {
-        biostoreConnector = BiostoreConnector.getConnector( bioStoreUrl, serverName );
+        this.biostoreConnector = biostoreConnector;
     }
 
     public List<Project> getProjectListWithToken(String username, String jwToken) throws SecurityException
