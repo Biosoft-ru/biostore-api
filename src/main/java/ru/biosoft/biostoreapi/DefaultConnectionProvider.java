@@ -52,11 +52,11 @@ public class DefaultConnectionProvider
         biostoreConnector = BiostoreConnector.getConnector( bioStoreUrl, serverName );
     }
 
-    public List<Project> getProjectListWithToken(String username, String jwToken) throws SecurityException
+    public List<Project> getProjectList(JWToken jwToken) throws SecurityException
     {
         Map<String, String> parameters = new HashMap<>();
-        parameters.put( ATTR_JWTOKEN, jwToken );
-        return getProjectList( biostoreConnector, username, parameters );
+        parameters.put( ATTR_JWTOKEN, jwToken.getTokenValue() );
+        return getProjectList( biostoreConnector, jwToken.getUsername(), parameters );
     }
 
     public List<Project> getProjectList(String username, String password) throws SecurityException
@@ -201,7 +201,7 @@ public class DefaultConnectionProvider
         }
     }
 
-    public String getJWToken(String username, String password) throws SecurityException
+    public JWToken getJWToken(String username, String password) throws SecurityException
     {
         Map<String, String> parameters = prepareLoginParametersMap( username, password );
         JSONObject response = biostoreConnector.askServer( username, ACTION_LOGIN, parameters );
@@ -213,7 +213,7 @@ public class DefaultConnectionProvider
                 String jwToken = response.getString( ATTR_JWTOKEN );
                 if( jwToken == null )
                     throw new SecurityException( "Specified server does not support json web tokens." );
-                return jwToken;
+                return new JWToken( username, jwToken );
             }
             else
             {
