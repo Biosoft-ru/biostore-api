@@ -2,7 +2,9 @@ package ru.biosoft.biostoreapi;
 
 import org.json.JSONObject;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -61,14 +63,14 @@ public class DefaultConnectionProviderTest
         Map<String, String> params1 = Maps.builder().put(ATTR_USERNAME, "test").put(ATTR_PASSWORD, "test").build();
         when(mock.askServer(eq("test"), eq(ACTION_LOGIN), eq(params1))).thenReturn(new JSONObject(doubleQuotes(token)));
 
-        String jwToken = test.getJWToken("test", "test");
-        assertEquals("123123", jwToken);
+        JWToken jwToken = test.getJWToken("test", "test");
+        assertEquals("123123", jwToken.getTokenValue());
 
         String res = "{'permissions':[{'path':'data/Collaboration/Demo','permissions':3}],'jwtoken':'123123','admin':false,'groups':[],'type':'ok','limits':[],'products':[{'name':'Server'}]}";
         Map<String, String> params2 = Maps.builder().put(ATTR_JWTOKEN, "123123").build();
         when(mock.askServer(eq("test"), eq(ACTION_LOGIN), eq(params2))).thenReturn(new JSONObject(doubleQuotes(res)));
 
-        List<Project> projectList = test.getProjectListWithToken( "test",  jwToken);
+        List<Project> projectList = test.getProjectList(jwToken);
 
         assertEquals( 1, projectList.size() );
         assertEquals( "Demo (Info/Read)", projectList.get( 0 ).toString() );
@@ -76,9 +78,15 @@ public class DefaultConnectionProviderTest
         assertEquals( 3, projectList.get( 0 ).getPermissions() );
     }
 
-    @Test(expected = SecurityException.class)
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
+    @Test
     public void errorLogin()
     {
+        thrown.expect( SecurityException.class );
+        thrown.expectMessage( "Incorrect email or password" );
+
         String res = "{'type':'error','message':'Incorrect email or password'}";
         when(mock.askServer(eq("errorName"), eq(ACTION_LOGIN), any())).thenReturn(new JSONObject(doubleQuotes(res)));
 
