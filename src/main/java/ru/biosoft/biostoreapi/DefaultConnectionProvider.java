@@ -19,6 +19,7 @@ public class DefaultConnectionProvider
 
     public static final String ACTION_LOGIN = "login";
     public static final String ACTION_CREATE_PROJECT = "createProject";
+    public static final String ACTION_ADD_TO_PROJECT = "addToProject";
 
     public static final String TYPE_OK = "ok";
     //    public static final String TYPE_ERROR = "error";
@@ -33,6 +34,7 @@ public class DefaultConnectionProvider
     public static final String ATTR_GROUP = "group";
     public static final String ATTR_MODULE = "module";
     public static final String ATTR_GROUP_USER = "user";
+    public static final String ATTR_PROJECT_NAME = "projectName";
 
     public static final String ATTR_TYPE = "type";
     public static final String ATTR_MESSAGE = "message";
@@ -194,6 +196,35 @@ public class DefaultConnectionProvider
         parameters.put( ATTR_PERMISSION, String.valueOf( permission ) );
 
         JSONObject jsonResponse = biostoreConnector.askServer( username, ACTION_CREATE_PROJECT, parameters );
+        if( !TYPE_OK.equals( jsonResponse.getString( ATTR_TYPE ) ) )
+        {
+            log.severe( jsonResponse.getString( ATTR_MESSAGE ) );
+            throw new SecurityException( jsonResponse.getString( ATTR_MESSAGE ) );
+        }
+    }
+
+    public void addUserToProject(String username, String password, String userToAdd, String projectName)
+    {
+        Map<String, String> parameters = prepareLoginParametersMap( username, password );
+        parameters.put( ATTR_PROJECT_NAME, projectName );
+        parameters.put( ATTR_GROUP_USER, userToAdd );
+
+        addUserToProject( biostoreConnector, username, parameters );
+    }
+
+    public void addUserToProject(JWToken jwToken, String userToAdd, String projectName)
+    {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put( ATTR_JWTOKEN, jwToken.getTokenValue() );
+        parameters.put( ATTR_PROJECT_NAME, projectName );
+        parameters.put( ATTR_GROUP_USER, userToAdd );
+
+        addUserToProject( biostoreConnector, jwToken.getUsername(), parameters );
+    }
+
+    private static void addUserToProject(BiostoreConnector bc, String username, Map<String, String> params)
+    {
+        JSONObject jsonResponse = bc.askServer( username, ACTION_ADD_TO_PROJECT, params );
         if( !TYPE_OK.equals( jsonResponse.getString( ATTR_TYPE ) ) )
         {
             log.severe( jsonResponse.getString( ATTR_MESSAGE ) );
