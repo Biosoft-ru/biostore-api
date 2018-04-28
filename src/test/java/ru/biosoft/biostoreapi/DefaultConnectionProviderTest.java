@@ -60,4 +60,14 @@ public class DefaultConnectionProviderTest
 
         test.authorize("errorName", "", null);
     }
+
+    @Test
+    public void errorAddUserToProject()
+    {
+        thrown.expect( SecurityException.class );
+        thrown.expectMessage( "Only group or server administrator can add users to project" );
+
+        DefaultConnectionProvider test = new DefaultConnectionProvider( BIOSTORE_SERVER_NAME );
+        test.addUserToProject( "", "", "", "Demo" );
+    }
 }
