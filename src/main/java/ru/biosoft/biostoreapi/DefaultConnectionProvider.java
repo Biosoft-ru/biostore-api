@@ -203,6 +203,23 @@ public class DefaultConnectionProvider
         }
     }
 
+    public void createProjectWithPermissions(JWToken jwToken, String projectName, int permission) throws Exception
+    {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put( ATTR_JWTOKEN, jwToken.getTokenValue() );
+        parameters.put( ATTR_GROUP_USER, jwToken.getUsername() );
+        parameters.put( ATTR_GROUP, projectName );
+        parameters.put( ATTR_MODULE, "data/Collaboration/" + projectName );
+        parameters.put( ATTR_PERMISSION, String.valueOf( permission ) );
+
+        JSONObject jsonResponse = biostoreConnector.askServer( jwToken.getUsername(), ACTION_CREATE_PROJECT, parameters );
+        if( !TYPE_OK.equals( jsonResponse.getString( ATTR_TYPE ) ) )
+        {
+            log.severe( jsonResponse.getString( ATTR_MESSAGE ) );
+            throw new SecurityException( jsonResponse.getString( ATTR_MESSAGE ) );
+        }
+    }
+
     public void addUserToProject(String username, String password, String userToAdd, String projectName)
     {
         Map<String, String> parameters = prepareLoginParametersMap( username, password );
