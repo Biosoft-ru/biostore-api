@@ -57,14 +57,14 @@ public class DefaultConnectionProvider
         this.biostoreConnector = biostoreConnector;
     }
 
-    public List<Project> getProjectList(JWToken jwToken) throws SecurityException
+    public List<Project> getProjectList(JWToken jwToken)
     {
         Map<String, String> parameters = new HashMap<>();
         parameters.put( ATTR_JWTOKEN, jwToken.getTokenValue() );
         return getProjectList( biostoreConnector, jwToken.getUsername(), parameters );
     }
 
-    public List<Project> getProjectList(String username, String password) throws SecurityException
+    public List<Project> getProjectList(String username, String password)
     {
         Map<String, String> parameters = prepareLoginParametersMap( username, password );
         return getProjectList( biostoreConnector, username, parameters );
@@ -103,7 +103,7 @@ public class DefaultConnectionProvider
         }
     }
 
-    public UserPermissions authorize(String username, String password, String remoteAddress) throws SecurityException
+    public UserPermissions authorize(String username, String password, String remoteAddress)
     {
         Map<String, String> parameters = prepareLoginParametersMap( username, password );
         if( remoteAddress != null )
@@ -190,7 +190,7 @@ public class DefaultConnectionProvider
         return parameters;
     }
 
-    public void createProjectWithPermissions(String username, String password, String projectName, int permission) throws Exception
+    public void createProjectWithPermissions(String username, String password, String projectName, int permission)
     {
         Map<String, String> parameters = prepareLoginParametersMap( username, password );
         parameters.put( ATTR_GROUP_USER, username );
@@ -235,7 +235,7 @@ public class DefaultConnectionProvider
         }
     }
 
-    public JWToken getJWToken(String username, String password) throws SecurityException
+    public JWToken getJWToken(String username, String password)
     {
         Map<String, String> parameters = prepareLoginParametersMap( username, password );
         JSONObject response = biostoreConnector.askServer( username, ACTION_LOGIN, parameters );
