@@ -3,7 +3,6 @@ package ru.biosoft.biostoreapi;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -51,7 +50,8 @@ public class DefaultConnectionProvider
 
     protected BiostoreConnector biostoreConnector;
 
-    private static final String BIOSTORE_DEFAULT_URL = "https://bio-store.org/biostore";
+    //    private static final String BIOSTORE_DEFAULT_URL = "https://bio-store.org/biostore";
+    private static final String BIOSTORE_DEFAULT_URL = "http://localhost:8080/biostore";
 
     public DefaultConnectionProvider(String serverName)
     {
@@ -232,7 +232,7 @@ public class DefaultConnectionProvider
         }
     }
 
-    public List<String> getProjectUsers(JWToken jwToken, String projectName)
+    public List<ProjectUser> getProjectUsers(JWToken jwToken, String projectName)
     {
         Map<String, String> params = new HashMap<>();
         params.put( ATTR_JWTOKEN, jwToken.getTokenValue() );
@@ -244,15 +244,10 @@ public class DefaultConnectionProvider
             log.severe( jsonResponse.getString( ATTR_MESSAGE ) );
             throw new SecurityException( jsonResponse.getString( ATTR_MESSAGE ) );
         }
-        List<String> result = new ArrayList<>();
-        JSONArray jsonArray = jsonResponse.getJSONArray( "projectUsers" );
-        Iterator<?> it = jsonArray.iterator();
-        while( it.hasNext() )
-        {
-            String value = (String)it.next();
-            result.add( value );
-        }
-        return result;
+        return arrayOfObjects( jsonResponse.getJSONArray( "projectUsers" ) )
+                .map( ProjectUser::createFromJSON )
+                .filter( pu -> pu != null )
+                .collect( Collectors.toList() );
     }
 
     public JWToken getJWToken(String username, String password)
