@@ -43,20 +43,6 @@ public class DefaultConnectionProviderTest
     }
 
     @Test
-    public void projectList()
-    {
-        String res = "{'permissions':[{'path':'data/Collaboration/Demo','permissions':3}],'jwtoken':'123123','admin':false,'groups':[],'type':'ok','limits':[],'products':[{'name':'Server'}]}";
-        when(mock.askServer(eq(""), eq(ACTION_LOGIN), any())).thenReturn(new JSONObject(doubleQuotes(res)));
-
-        List<Project> projectList = test.getProjectList( "", "" );
-
-        assertEquals( 1, projectList.size() );
-        assertEquals( "Demo (Info/Read)", projectList.get( 0 ).toString() );
-        assertEquals( "Demo", projectList.get( 0 ).getProjectName() );
-        assertEquals( 3, projectList.get( 0 ).getPermissions() );
-    }
-
-    @Test
     public void projectListWithToken()
     {
         String token = "{'type':'ok','jwtoken':'123123'}";
@@ -96,13 +82,23 @@ public class DefaultConnectionProviderTest
     @Test
     public void errorAddUserToProject()
     {
+        String token = "{'type':'ok','jwtoken':'123123'}";
+        Map<String, String> params1 = Maps.builder().put( ATTR_USERNAME, "test" ).put( ATTR_PASSWORD, "test" ).build();
+        when( mock.askServer( eq( "test" ), eq( ACTION_LOGIN ), eq( params1 ) ) ).thenReturn( new JSONObject( doubleQuotes( token ) ) );
+
+        JWToken jwToken = test.getJWToken( "test", "test" );
+        assertEquals( "123123", jwToken.getTokenValue() );
+
         thrown.expect( SecurityException.class );
         thrown.expectMessage( "Only group or server administrator can add users to project" );
-        
-        String res = "{'type':'error','message':'Only group or server administrator can add users to project'}";
-        when(mock.askServer(eq(""), eq(ACTION_ADD_TO_PROJECT), any())).thenReturn(new JSONObject(doubleQuotes(res)));
 
-        test.addUserToProject( "", "", "", "Demo" );
+        String res = "{'type':'error','message':'Only group or server administrator can add users to project'}";
+        Map<String, String> params2 = Maps.builder().put( ATTR_JWTOKEN, "123123" ).put( ATTR_GROUP_USER, "testUser" )
+                .put( ATTR_PROJECT_NAME, "Demo" ).build();
+        when( mock.askServer( eq( "test" ), eq( ACTION_ADD_TO_PROJECT ), eq( params2 ) ) )
+                .thenReturn( new JSONObject( doubleQuotes( res ) ) );
+
+        test.addUserToProject( jwToken, "testUser", "Demo" );
     }
 
     private static String doubleQuotes(Object s)

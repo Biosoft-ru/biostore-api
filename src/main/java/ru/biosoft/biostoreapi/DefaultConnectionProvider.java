@@ -67,18 +67,8 @@ public class DefaultConnectionProvider
     {
         Map<String, String> parameters = new HashMap<>();
         parameters.put( ATTR_JWTOKEN, jwToken.getTokenValue() );
-        return getProjectList( biostoreConnector, jwToken.getUsername(), parameters );
-    }
-
-    public List<Project> getProjectList(String username, String password)
-    {
-        Map<String, String> parameters = prepareLoginParametersMap( username, password );
-        return getProjectList( biostoreConnector, username, parameters );
-    }
-
-    private static List<Project> getProjectList(BiostoreConnector bc, String username, Map<String, String> parameters)
-    {
-        JSONObject response = bc.askServer( username, ACTION_LOGIN, parameters );
+        String username = jwToken.getUsername();
+        JSONObject response = biostoreConnector.askServer( username, ACTION_LOGIN, parameters );
         try
         {
             String status = response.getString( ATTR_TYPE );
@@ -196,20 +186,6 @@ public class DefaultConnectionProvider
         return parameters;
     }
 
-    public void createProjectWithPermissions(String username, String password, String projectName, int permission)
-    {
-        Map<String, String> parameters = prepareLoginParametersMap( username, password );
-        parameters.put( ATTR_PROJECT_NAME, projectName );
-        parameters.put( ATTR_PERMISSION, String.valueOf( permission ) );
-
-        JSONObject jsonResponse = biostoreConnector.askServer( username, ACTION_CREATE_PROJECT, parameters );
-        if( !TYPE_OK.equals( jsonResponse.getString( ATTR_TYPE ) ) )
-        {
-            log.severe( jsonResponse.getString( ATTR_MESSAGE ) );
-            throw new SecurityException( jsonResponse.getString( ATTR_MESSAGE ) );
-        }
-    }
-
     public void createProjectWithPermissions(JWToken jwToken, String projectName, int permission) throws Exception
     {
         Map<String, String> parameters = new HashMap<>();
@@ -225,15 +201,6 @@ public class DefaultConnectionProvider
         }
     }
 
-    public void addUserToProject(String username, String password, String userToAdd, String projectName)
-    {
-        Map<String, String> parameters = prepareLoginParametersMap( username, password );
-        parameters.put( ATTR_PROJECT_NAME, projectName );
-        parameters.put( ATTR_GROUP_USER, userToAdd );
-
-        addUserToProject( biostoreConnector, username, parameters );
-    }
-
     public void addUserToProject(JWToken jwToken, String userToAdd, String projectName)
     {
         Map<String, String> parameters = new HashMap<>();
@@ -241,12 +208,7 @@ public class DefaultConnectionProvider
         parameters.put( ATTR_PROJECT_NAME, projectName );
         parameters.put( ATTR_GROUP_USER, userToAdd );
 
-        addUserToProject( biostoreConnector, jwToken.getUsername(), parameters );
-    }
-
-    private static void addUserToProject(BiostoreConnector bc, String username, Map<String, String> params)
-    {
-        JSONObject jsonResponse = bc.askServer( username, ACTION_ADD_TO_PROJECT, params );
+        JSONObject jsonResponse = biostoreConnector.askServer( jwToken.getUsername(), ACTION_ADD_TO_PROJECT, parameters );
         if( !TYPE_OK.equals( jsonResponse.getString( ATTR_TYPE ) ) )
         {
             log.severe( jsonResponse.getString( ATTR_MESSAGE ) );
