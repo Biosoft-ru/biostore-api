@@ -63,42 +63,6 @@ public class DefaultConnectionProvider
         this.biostoreConnector = biostoreConnector;
     }
 
-    public List<Project> getProjectList(JWToken jwToken)
-    {
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put( ATTR_JWTOKEN, jwToken.getTokenValue() );
-        String username = jwToken.getUsername();
-        JSONObject response = biostoreConnector.askServer( username, ACTION_LOGIN, parameters );
-        try
-        {
-            String status = response.getString( ATTR_TYPE );
-            if( status.equals( TYPE_OK ) )
-            {
-                return arrayOfObjects( response.getJSONArray( "permissions" ) )
-                        .map( Project::createFromJSON )
-                        .filter( p -> p != null )
-                        .collect( Collectors.toList() );
-            }
-            else
-            {
-                if( response.get( ATTR_MESSAGE ) != null )
-                {
-                    log.severe( "While authorizing " + username + ":" + response.get( ATTR_MESSAGE ) );
-                    throw new SecurityException( response.getString( ATTR_MESSAGE ) );
-                }
-                else
-                {
-                    throw new SecurityException( response.toString() );
-                }
-            }
-        }
-        catch( UnsupportedOperationException e )
-        {
-            log.log( Level.SEVERE, "Invalid JSON response", e );
-            throw new SecurityException( "Error communicating to authentication server" );
-        }
-    }
-
     public UserPermissions authorize(String username, String password, String remoteAddress)
     {
         Map<String, String> parameters = prepareLoginParametersMap( username, password );
@@ -184,6 +148,42 @@ public class DefaultConnectionProvider
         if( fields.length > 1 )
             parameters.put( ATTR_SUDO, fields[1] );
         return parameters;
+    }
+
+    public List<Project> getProjectList(JWToken jwToken)
+    {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put( ATTR_JWTOKEN, jwToken.getTokenValue() );
+        String username = jwToken.getUsername();
+        JSONObject response = biostoreConnector.askServer( username, ACTION_LOGIN, parameters );
+        try
+        {
+            String status = response.getString( ATTR_TYPE );
+            if( status.equals( TYPE_OK ) )
+            {
+                return arrayOfObjects( response.getJSONArray( "permissions" ) )
+                        .map( Project::createFromJSON )
+                        .filter( p -> p != null )
+                        .collect( Collectors.toList() );
+            }
+            else
+            {
+                if( response.get( ATTR_MESSAGE ) != null )
+                {
+                    log.severe( "While authorizing " + username + ":" + response.get( ATTR_MESSAGE ) );
+                    throw new SecurityException( response.getString( ATTR_MESSAGE ) );
+                }
+                else
+                {
+                    throw new SecurityException( response.toString() );
+                }
+            }
+        }
+        catch( UnsupportedOperationException e )
+        {
+            log.log( Level.SEVERE, "Invalid JSON response", e );
+            throw new SecurityException( "Error communicating to authentication server" );
+        }
     }
 
     public void createProjectWithPermissions(JWToken jwToken, String projectName, int permission) throws Exception
