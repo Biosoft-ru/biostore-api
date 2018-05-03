@@ -18,8 +18,10 @@ public class DefaultConnectionProvider
     protected static final Logger log = Logger.getLogger( DefaultConnectionProvider.class.getName() );
 
     public static final String ACTION_LOGIN = "login";
+    public static final String ACTION_LOGOUT = "logout";
     public static final String ACTION_CREATE_PROJECT = "createProject";
     public static final String ACTION_ADD_TO_PROJECT = "addToProject";
+    public static final String ACTION_REFRESH_J_W_TOKEN = "refreshJWToken";
 
     public static final String TYPE_OK = "ok";
     //    public static final String TYPE_ERROR = "error";
@@ -261,9 +263,9 @@ public class DefaultConnectionProvider
             }
             else
             {
-                if( response.get( ATTR_MESSAGE ) != null )
+                if( response.getString( ATTR_MESSAGE ) != null )
                 {
-                    log.severe( "While authorizing " + username + ":" + response.get( ATTR_MESSAGE ) );
+                    log.severe( "While authorizing " + username + ":" + response.getString( ATTR_MESSAGE ) );
                     throw new SecurityException( response.getString( ATTR_MESSAGE ) );
                 }
                 else
@@ -276,6 +278,44 @@ public class DefaultConnectionProvider
         {
             log.log( Level.SEVERE, "Invalid JSON response", e );
             throw new SecurityException( "Error communicating to authentication server" );
+        }
+    }
+
+    public JWToken refreshJWToken(JWToken jwToken)
+    {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put( ATTR_JWTOKEN, jwToken.getTokenValue() );
+        JSONObject response = biostoreConnector.askServer( jwToken.getUsername(), ACTION_REFRESH_J_W_TOKEN, parameters );
+
+        String status = response.getString( ATTR_TYPE );
+        if( status.equals( TYPE_OK ) )
+        {
+            String jwTokenStr = response.getString( ATTR_JWTOKEN );
+            if( jwTokenStr == null )
+                throw new SecurityException( "Specified server does not support json web tokens." );
+            return new JWToken( jwToken.getUsername(), jwTokenStr );
+        }
+        else if( response.getString( ATTR_MESSAGE ) != null )
+        {
+            log.severe( "While refreshing token for " + jwToken.getUsername() + ":" + response.getString( ATTR_MESSAGE ) );
+            throw new SecurityException( response.getString( ATTR_MESSAGE ) );
+        }
+        else
+        {
+            throw new SecurityException( response.toString() );
+        }
+    }
+
+    public void logout(JWToken jwToken)
+    {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put( ATTR_JWTOKEN, jwToken.getTokenValue() );
+
+        JSONObject jsonResponse = biostoreConnector.askServer( jwToken.getUsername(), ACTION_LOGOUT, parameters );
+        if( !TYPE_OK.equals( jsonResponse.getString( ATTR_TYPE ) ) )
+        {
+            log.severe( jsonResponse.getString( ATTR_MESSAGE ) );
+            throw new SecurityException( jsonResponse.getString( ATTR_MESSAGE ) );
         }
     }
 }
