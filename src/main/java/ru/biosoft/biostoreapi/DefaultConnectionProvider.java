@@ -22,6 +22,7 @@ public class DefaultConnectionProvider
     public static final String ACTION_CREATE_PROJECT = "createProject";
     public static final String ACTION_ADD_TO_PROJECT = "addToProject";
     public static final String ACTION_REFRESH_J_W_TOKEN = "refreshJWToken";
+    public static final String ACTION_CHANGE_ROLE_IN_PROJECT = "changeRoleInProject";
 
     public static final String TYPE_OK = "ok";
     //    public static final String TYPE_ERROR = "error";
@@ -36,6 +37,7 @@ public class DefaultConnectionProvider
     public static final String ATTR_GROUP = "group";
     public static final String ATTR_MODULE = "module";
     public static final String ATTR_GROUP_USER = "user";
+    public static final String ATTR_GROUP_ROLE = "role";
     public static final String ATTR_PROJECT_NAME = "projectName";
 
     public static final String ATTR_TYPE = "type";
@@ -240,6 +242,22 @@ public class DefaultConnectionProvider
     private static void addUserToProject(BiostoreConnector bc, String username, Map<String, String> params)
     {
         JSONObject jsonResponse = bc.askServer( username, ACTION_ADD_TO_PROJECT, params );
+        if( !TYPE_OK.equals( jsonResponse.getString( ATTR_TYPE ) ) )
+        {
+            log.severe( jsonResponse.getString( ATTR_MESSAGE ) );
+            throw new SecurityException( jsonResponse.getString( ATTR_MESSAGE ) );
+        }
+    }
+
+    public void changeUserRoleInProject(JWToken jwToken, String projectName, String userToChange, String newRole)
+    {
+        Map<String, String> params = new HashMap<>();
+        params.put( ATTR_JWTOKEN, jwToken.getTokenValue() );
+        params.put( ATTR_GROUP_USER, userToChange );
+        params.put( ATTR_PROJECT_NAME, projectName );
+        params.put( ATTR_GROUP_ROLE, newRole );
+
+        JSONObject jsonResponse = biostoreConnector.askServer( jwToken.getUsername(), ACTION_CHANGE_ROLE_IN_PROJECT, params );
         if( !TYPE_OK.equals( jsonResponse.getString( ATTR_TYPE ) ) )
         {
             log.severe( jsonResponse.getString( ATTR_MESSAGE ) );
