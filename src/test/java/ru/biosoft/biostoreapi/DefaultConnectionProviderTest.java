@@ -26,37 +26,39 @@ public class DefaultConnectionProviderTest
     @Before
     public void setUp() throws Exception
     {
-        mock = mock(BiostoreConnector.class);
-        test = new DefaultConnectionProvider(mock);
+        mock = mock( BiostoreConnector.class );
+        test = new DefaultConnectionProvider( mock );
     }
 
     @Test
     public void authorize()
     {
-        String res = "{'permissions':[{'path':'data/Collaboration/Demo','permissions':3}],'jwtoken':'123123','admin':false,'groups':[],'type':'ok','limits':[],'products':[{'name':'Server'}]}";
-        when(mock.askServer(eq(""), eq(ACTION_LOGIN), any())).thenReturn(new JSONObject(doubleQuotes(res)));
+        String res = "{'permissions':[{'path':'data/Collaboration/Demo','permissions':3}],'jwtoken':'123123',"
+                + "'admin':false,'groups':[],'type':'ok','limits':[],'products':[{'name':'Server'}]}";
+        when( mock.askServer( eq( "" ), eq( ACTION_LOGIN ), any() ) ).thenReturn( new JSONObject( doubleQuotes( res ) ) );
 
-        UserPermissions authorize = test.authorize("", "", null);
+        UserPermissions authorize = test.authorize( "", "", null );
 
-        assertEquals(1, authorize.getDbToPermission().size());
-        assertEquals(3, authorize.getDbToPermission().get("data/Collaboration/Demo").getPermissions());
+        assertEquals( 1, authorize.getDbToPermission().size() );
+        assertEquals( 3, authorize.getDbToPermission().get( "data/Collaboration/Demo" ).getPermissions() );
     }
 
     @Test
     public void projectListWithToken()
     {
         String token = "{'type':'ok','jwtoken':'123123'}";
-        Map<String, String> params1 = Maps.builder().put(ATTR_USERNAME, "test").put(ATTR_PASSWORD, "test").build();
-        when(mock.askServer(eq("test"), eq(ACTION_LOGIN), eq(params1))).thenReturn(new JSONObject(doubleQuotes(token)));
+        Map<String, String> params1 = Maps.builder().put( ATTR_USERNAME, "test" ).put( ATTR_PASSWORD, "test" ).build();
+        when( mock.askServer( eq( "test" ), eq( ACTION_LOGIN ), eq( params1 ) ) ).thenReturn( new JSONObject( doubleQuotes( token ) ) );
 
-        JWToken jwToken = test.getJWToken("test", "test");
-        assertEquals("123123", jwToken.getTokenValue());
+        JWToken jwToken = test.getJWToken( "test", "test" );
+        assertEquals( "123123", jwToken.getTokenValue() );
 
-        String res = "{'permissions':[{'path':'data/Collaboration/Demo','permissions':3}],'jwtoken':'123123','admin':false,'groups':[],'type':'ok','limits':[],'products':[{'name':'Server'}]}";
-        Map<String, String> params2 = Maps.builder().put(ATTR_JWTOKEN, "123123").build();
-        when(mock.askServer(eq("test"), eq(ACTION_LOGIN), eq(params2))).thenReturn(new JSONObject(doubleQuotes(res)));
+        String res = "{'permissions':[{'path':'data/Collaboration/Demo','permissions':3}],'jwtoken':'123123',"
+                + "'admin':false,'groups':[],'type':'ok','limits':[],'products':[{'name':'Server'}]}";
+        Map<String, String> params2 = Maps.builder().put( ATTR_JWTOKEN, "123123" ).build();
+        when( mock.askServer( eq( "test" ), eq( ACTION_LOGIN ), eq( params2 ) ) ).thenReturn( new JSONObject( doubleQuotes( res ) ) );
 
-        List<Project> projectList = test.getProjectList(jwToken);
+        List<Project> projectList = test.getProjectList( jwToken );
 
         assertEquals( 1, projectList.size() );
         assertEquals( "Demo (Info/Read)", projectList.get( 0 ).toString() );
@@ -74,9 +76,9 @@ public class DefaultConnectionProviderTest
         thrown.expectMessage( "Incorrect email or password" );
 
         String res = "{'type':'error','message':'Incorrect email or password'}";
-        when(mock.askServer(eq("errorName"), eq(ACTION_LOGIN), any())).thenReturn(new JSONObject(doubleQuotes(res)));
+        when( mock.askServer( eq( "errorName" ), eq( ACTION_LOGIN ), any() ) ).thenReturn( new JSONObject( doubleQuotes( res ) ) );
 
-        test.authorize("errorName", "", null);
+        test.authorize( "errorName", "", null );
     }
 
     @Test
@@ -103,29 +105,32 @@ public class DefaultConnectionProviderTest
 
     private static String doubleQuotes(Object s)
     {
-        return s.toString().replace("'", "\"");
+        return s.toString().replace( "'", "\"" );
     }
 
-    public static class Maps {
+    public static class Maps
+    {
+        private final Map<String, String> map;
 
-        private Map<String, String> map;
-
-        private Maps(){
+        private Maps()
+        {
             map = new HashMap<>();
         }
 
-        public static Maps builder(){
+        public static Maps builder()
+        {
             return new Maps();
         }
 
-        public Maps put(String key, String value) {
-            map.put(key, value);
+        public Maps put(String key, String value)
+        {
+            map.put( key, value );
             return this;
         }
 
-        public Map<String, String> build() {
+        public Map<String, String> build()
+        {
             return map;
         }
-
     }
 }
