@@ -20,8 +20,8 @@ public class Project
     }
 
     private String permissionsStr;
-    @Override
-    public String toString()
+
+    public String getPermissionsStr()
     {
         if( permissionsStr == null )
         {
@@ -45,7 +45,13 @@ public class Project
             }
             permissionsStr = permStrList.isEmpty() ? "" : String.join( "/", permStrList );
         }
-        return projectName + " (" + permissionsStr + ")";
+        return permissionsStr;
+    }
+
+    @Override
+    public String toString()
+    {
+        return projectName + " (" + getPermissionsStr() + ")";
     }
 
     public String getProjectName()
