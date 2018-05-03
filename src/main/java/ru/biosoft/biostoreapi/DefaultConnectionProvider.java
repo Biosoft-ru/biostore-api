@@ -3,6 +3,7 @@ package ru.biosoft.biostoreapi;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -23,6 +24,7 @@ public class DefaultConnectionProvider
     public static final String ACTION_ADD_TO_PROJECT = "addToProject";
     public static final String ACTION_REFRESH_J_W_TOKEN = "refreshJWToken";
     public static final String ACTION_CHANGE_ROLE_IN_PROJECT = "changeRoleInProject";
+    public static final String ACTION_PROJECT_USERS = "projectUsers";
 
     public static final String TYPE_OK = "ok";
     //    public static final String TYPE_ERROR = "error";
@@ -263,6 +265,29 @@ public class DefaultConnectionProvider
             log.severe( jsonResponse.getString( ATTR_MESSAGE ) );
             throw new SecurityException( jsonResponse.getString( ATTR_MESSAGE ) );
         }
+    }
+
+    public List<String> getProjectUsers(JWToken jwToken, String projectName)
+    {
+        Map<String, String> params = new HashMap<>();
+        params.put( ATTR_JWTOKEN, jwToken.getTokenValue() );
+        params.put( ATTR_PROJECT_NAME, projectName );
+
+        JSONObject jsonResponse = biostoreConnector.askServer( jwToken.getUsername(), ACTION_PROJECT_USERS, params );
+        if( !TYPE_OK.equals( jsonResponse.getString( ATTR_TYPE ) ) )
+        {
+            log.severe( jsonResponse.getString( ATTR_MESSAGE ) );
+            throw new SecurityException( jsonResponse.getString( ATTR_MESSAGE ) );
+        }
+        List<String> result = new ArrayList<>();
+        JSONArray jsonArray = jsonResponse.getJSONArray( "projectUsers" );
+        Iterator<?> it = jsonArray.iterator();
+        while( it.hasNext() )
+        {
+            String value = (String)it.next();
+            result.add( value );
+        }
+        return result;
     }
 
     public JWToken getJWToken(String username, String password) throws SecurityException
