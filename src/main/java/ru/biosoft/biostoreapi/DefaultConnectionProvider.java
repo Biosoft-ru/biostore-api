@@ -78,7 +78,7 @@ public class DefaultConnectionProvider
         }
         else
         {
-            if( response.get( ATTR_MESSAGE ) != null )
+            if( response.opt( ATTR_MESSAGE ) != null )
             {
                 log.severe( "While authorizing " + username + " (" + remoteAddress + "):" + response.get( ATTR_MESSAGE ) );
                 throw new SecurityException( response.getString( ATTR_MESSAGE ) );
@@ -158,7 +158,7 @@ public class DefaultConnectionProvider
         }
         else
         {
-            if( response.get( ATTR_MESSAGE ) != null )
+            if( response.opt( ATTR_MESSAGE ) != null )
             {
                 log.severe( "While authorizing " + username + ":" + response.get( ATTR_MESSAGE ) );
                 throw new SecurityException( response.getString( ATTR_MESSAGE ) );
@@ -250,7 +250,7 @@ public class DefaultConnectionProvider
         }
         else
         {
-            if( response.getString( ATTR_MESSAGE ) != null )
+            if( response.opt( ATTR_MESSAGE ) != null )
             {
                 log.severe( "While authorizing " + username + ":" + response.getString( ATTR_MESSAGE ) );
                 throw new SecurityException( response.getString( ATTR_MESSAGE ) );
@@ -276,7 +276,7 @@ public class DefaultConnectionProvider
                 throw new SecurityException( "Specified server does not support json web tokens." );
             return new JWToken( jwToken.getUsername(), jwTokenStr );
         }
-        else if( response.getString( ATTR_MESSAGE ) != null )
+        else if( response.opt( ATTR_MESSAGE ) != null )
         {
             log.severe( "While refreshing token for " + jwToken.getUsername() + ":" + response.getString( ATTR_MESSAGE ) );
             throw new SecurityException( response.getString( ATTR_MESSAGE ) );

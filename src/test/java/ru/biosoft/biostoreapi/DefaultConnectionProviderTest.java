@@ -180,6 +180,15 @@ public class DefaultConnectionProviderTest
     }
 
     @Test
+    public void errorLoginNoMessage()
+    {
+        String res = constructErrorResponse( null );
+        when( mock.askServer( eq( "errorName" ), eq( ACTION_LOGIN ), any() ) ).thenReturn( new JSONObject( doubleQuotes( res ) ) );
+
+        test.authorize( "errorName", "", null );
+    }
+
+    @Test
     public void errorLogout()
     {
         JWToken jwToken = new JWToken( "test", "123123" );
@@ -202,6 +211,15 @@ public class DefaultConnectionProviderTest
     }
 
     @Test
+    public void errorJWTokenNoMessage()
+    {
+        String res = constructErrorResponse( null );
+        when( mock.askServer( eq( "" ), eq( ACTION_LOGIN ), any() ) ).thenReturn( new JSONObject( doubleQuotes( res ) ) );
+
+        test.getJWToken( "", "" );
+    }
+
+    @Test
     public void errorRefreshJWToken()
     {
         JWToken jwToken = new JWToken( "test", "123123" );
@@ -215,11 +233,37 @@ public class DefaultConnectionProviderTest
     }
 
     @Test
+    public void errorRefreshJWTokenNoMessage()
+    {
+        JWToken jwToken = new JWToken( "test", "123123" );
+
+        String res = constructErrorResponse( null );
+        Map<String, String> params = Maps.builder().put( ATTR_JWTOKEN, jwToken.getTokenValue() ).build();
+        when( mock.askServer( eq( jwToken.getUsername() ), eq( ACTION_REFRESH_J_W_TOKEN ), eq( params ) ) )
+                .thenReturn( new JSONObject( doubleQuotes( res ) ) );
+
+        test.refreshJWToken( jwToken );
+    }
+
+    @Test
     public void errorProjectList()
     {
         JWToken jwToken = new JWToken( "test", "123123" );
 
         String res = constructErrorResponse( "Can not get project list" );
+        Map<String, String> params = Maps.builder().put( ATTR_JWTOKEN, jwToken.getTokenValue() ).build();
+        when( mock.askServer( eq( jwToken.getUsername() ), eq( ACTION_LOGIN ), eq( params ) ) )
+                .thenReturn( new JSONObject( doubleQuotes( res ) ) );
+
+        test.getProjectList( jwToken );
+    }
+
+    @Test
+    public void errorProjectListNoMessage()
+    {
+        JWToken jwToken = new JWToken( "test", "123123" );
+
+        String res = constructErrorResponse( null );
         Map<String, String> params = Maps.builder().put( ATTR_JWTOKEN, jwToken.getTokenValue() ).build();
         when( mock.askServer( eq( jwToken.getUsername() ), eq( ACTION_LOGIN ), eq( params ) ) )
                 .thenReturn( new JSONObject( doubleQuotes( res ) ) );
@@ -288,10 +332,15 @@ public class DefaultConnectionProviderTest
     }
     private String constructMessageResponse(String message, String type)
     {
-        thrown.expect( SecurityException.class );
-        thrown.expectMessage( message );
+        String response = "{'type':'" + type;
+        if( message != null )
+            response += "','message':'" + message;
+        response += "'}";
 
-        return "{'type':'" + type + "','message':'" + message + "'}";
+        thrown.expect( SecurityException.class );
+        thrown.expectMessage( message == null ? response.replace( '\'', '"' ) : message );
+
+        return response;
     }
 
     private static String doubleQuotes(Object s)
