@@ -62,6 +62,7 @@ public class ProjectUserTest
         ProjectUser pu3 = new ProjectUser( "u2", "r1" );
         ProjectUser pu4 = new ProjectUser( "u1", "r2" );
 
+        assertTrue( pu1.equals( pu1 ) );
         assertTrue( pu1.equals( pu2 ) && pu2.equals( pu1 ) );
         assertTrue( pu1.hashCode() == pu2.hashCode() );
         assertFalse( pu1.equals( pu3 ) );
