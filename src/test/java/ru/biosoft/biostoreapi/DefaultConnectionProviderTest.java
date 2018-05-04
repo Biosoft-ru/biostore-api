@@ -151,8 +151,8 @@ public class DefaultConnectionProviderTest
     {
         JWToken jwToken = new JWToken( "test", "123123" );
 
-        String res = "{'type':'ok','projectUsers':[{'role':'Administrator','user':'projectAdmin'},"
-                + "{'role':'User','user':'test'},{'role':'User','user':'testUser'}]}";
+        String res = "{'type':'ok','projectUsers':[{'role':'User','user':'testUser'},"
+                + "{'role':'Administrator','user':'projectAdmin'},{'role':'User','user':'test'}]}";
         Map<String, String> params = Maps.builder().put( ATTR_JWTOKEN, jwToken.getTokenValue() ).put( ATTR_PROJECT_NAME, "Demo" ).build();
         when( mock.askServer( eq( jwToken.getUsername() ), eq( ACTION_PROJECT_USERS ), eq( params ) ) )
                 .thenReturn( new JSONObject( doubleQuotes( res ) ) );

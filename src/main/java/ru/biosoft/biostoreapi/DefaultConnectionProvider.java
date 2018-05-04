@@ -231,6 +231,7 @@ public class DefaultConnectionProvider
         return arrayOfObjects( jsonResponse.getJSONArray( "projectUsers" ) )
                 .map( ProjectUser::createFromJSON )
                 .filter( pu -> pu != null )
+                .sorted()
                 .collect( Collectors.toList() );
     }
 
