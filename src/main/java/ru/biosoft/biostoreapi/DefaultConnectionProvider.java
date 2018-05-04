@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -27,8 +26,8 @@ public class DefaultConnectionProvider
     public static final String ACTION_PROJECT_USERS = "projectUsers";
 
     public static final String TYPE_OK = "ok";
-    //    public static final String TYPE_ERROR = "error";
-    //    public static final String TYPE_NEED_LOGIN = "unauthorized";
+    public static final String TYPE_ERROR = "error";
+    public static final String TYPE_NEED_LOGIN = "unauthorized";
 
     public static final String ATTR_JWTOKEN = "jwtoken";
     public static final String ATTR_USERNAME = "username";
@@ -68,33 +67,26 @@ public class DefaultConnectionProvider
         if( remoteAddress != null )
             parameters.put( ATTR_IP, remoteAddress );
         JSONObject response = biostoreConnector.askServer( username, ACTION_LOGIN, parameters );
-        try
+
+        String status = response.getString( ATTR_TYPE );
+        if( status.equals( TYPE_OK ) )
         {
-            String status = response.getString( ATTR_TYPE );
-            if( status.equals( TYPE_OK ) )
+            String[] products = getProducts( response ).toArray( String[]::new );
+            UserPermissions result = new UserPermissions( username, password, products, getLimits( response ) );
+            initPermissions( result, response );
+            return result;
+        }
+        else
+        {
+            if( response.get( ATTR_MESSAGE ) != null )
             {
-                String[] products = getProducts( response ).toArray( String[]::new );
-                UserPermissions result = new UserPermissions( username, password, products, getLimits( response ) );
-                initPermissions( result, response );
-                return result;
+                log.severe( "While authorizing " + username + " (" + remoteAddress + "):" + response.get( ATTR_MESSAGE ) );
+                throw new SecurityException( response.getString( ATTR_MESSAGE ) );
             }
             else
             {
-                if( response.get( ATTR_MESSAGE ) != null )
-                {
-                    log.severe( "While authorizing " + username + " (" + remoteAddress + "):" + response.get( ATTR_MESSAGE ) );
-                    throw new SecurityException( response.getString( ATTR_MESSAGE ) );
-                }
-                else
-                {
-                    throw new SecurityException( response.toString() );
-                }
+                throw new SecurityException( response.toString() );
             }
-        }
-        catch( UnsupportedOperationException e )
-        {
-            log.log( Level.SEVERE, "Invalid JSON response", e );
-            throw new SecurityException( "Error communicating to authentication server" );
         }
     }
 
@@ -155,37 +147,30 @@ public class DefaultConnectionProvider
         parameters.put( ATTR_JWTOKEN, jwToken.getTokenValue() );
         String username = jwToken.getUsername();
         JSONObject response = biostoreConnector.askServer( username, ACTION_LOGIN, parameters );
-        try
+
+        String status = response.getString( ATTR_TYPE );
+        if( status.equals( TYPE_OK ) )
         {
-            String status = response.getString( ATTR_TYPE );
-            if( status.equals( TYPE_OK ) )
+            return arrayOfObjects( response.getJSONArray( "permissions" ) )
+                    .map( Project::createFromJSON )
+                    .filter( p -> p != null )
+                    .collect( Collectors.toList() );
+        }
+        else
+        {
+            if( response.get( ATTR_MESSAGE ) != null )
             {
-                return arrayOfObjects( response.getJSONArray( "permissions" ) )
-                        .map( Project::createFromJSON )
-                        .filter( p -> p != null )
-                        .collect( Collectors.toList() );
+                log.severe( "While authorizing " + username + ":" + response.get( ATTR_MESSAGE ) );
+                throw new SecurityException( response.getString( ATTR_MESSAGE ) );
             }
             else
             {
-                if( response.get( ATTR_MESSAGE ) != null )
-                {
-                    log.severe( "While authorizing " + username + ":" + response.get( ATTR_MESSAGE ) );
-                    throw new SecurityException( response.getString( ATTR_MESSAGE ) );
-                }
-                else
-                {
-                    throw new SecurityException( response.toString() );
-                }
+                throw new SecurityException( response.toString() );
             }
-        }
-        catch( UnsupportedOperationException e )
-        {
-            log.log( Level.SEVERE, "Invalid JSON response", e );
-            throw new SecurityException( "Error communicating to authentication server" );
         }
     }
 
-    public void createProjectWithPermissions(JWToken jwToken, String projectName, int permission) throws Exception
+    public void createProjectWithPermissions(JWToken jwToken, String projectName, int permission)
     {
         Map<String, String> parameters = new HashMap<>();
         parameters.put( ATTR_JWTOKEN, jwToken.getTokenValue() );
@@ -253,33 +238,26 @@ public class DefaultConnectionProvider
     {
         Map<String, String> parameters = prepareLoginParametersMap( username, password );
         JSONObject response = biostoreConnector.askServer( username, ACTION_LOGIN, parameters );
-        try
+
+        String status = response.getString( ATTR_TYPE );
+        if( status.equals( TYPE_OK ) )
         {
-            String status = response.getString( ATTR_TYPE );
-            if( status.equals( TYPE_OK ) )
+            String jwToken = response.getString( ATTR_JWTOKEN );
+            if( jwToken == null )
+                throw new SecurityException( "Specified server does not support json web tokens." );
+            return new JWToken( username, jwToken );
+        }
+        else
+        {
+            if( response.getString( ATTR_MESSAGE ) != null )
             {
-                String jwToken = response.getString( ATTR_JWTOKEN );
-                if( jwToken == null )
-                    throw new SecurityException( "Specified server does not support json web tokens." );
-                return new JWToken( username, jwToken );
+                log.severe( "While authorizing " + username + ":" + response.getString( ATTR_MESSAGE ) );
+                throw new SecurityException( response.getString( ATTR_MESSAGE ) );
             }
             else
             {
-                if( response.getString( ATTR_MESSAGE ) != null )
-                {
-                    log.severe( "While authorizing " + username + ":" + response.getString( ATTR_MESSAGE ) );
-                    throw new SecurityException( response.getString( ATTR_MESSAGE ) );
-                }
-                else
-                {
-                    throw new SecurityException( response.toString() );
-                }
+                throw new SecurityException( response.toString() );
             }
-        }
-        catch( UnsupportedOperationException e )
-        {
-            log.log( Level.SEVERE, "Invalid JSON response", e );
-            throw new SecurityException( "Error communicating to authentication server" );
         }
     }
 
