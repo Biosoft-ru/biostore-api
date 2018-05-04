@@ -50,8 +50,7 @@ public class DefaultConnectionProvider
 
     protected BiostoreConnector biostoreConnector;
 
-    //    private static final String BIOSTORE_DEFAULT_URL = "https://bio-store.org/biostore";
-    private static final String BIOSTORE_DEFAULT_URL = "http://localhost:8080/biostore";
+    private static final String BIOSTORE_DEFAULT_URL = "https://bio-store.org/biostore";
 
     public DefaultConnectionProvider(String serverName)
     {
