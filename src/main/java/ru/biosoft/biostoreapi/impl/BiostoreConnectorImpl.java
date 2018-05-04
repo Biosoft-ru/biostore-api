@@ -36,22 +36,13 @@ public class BiostoreConnectorImpl implements BiostoreConnector
     }
 
     /**
-     * Check is session exist for user
-     * @param username current user name
-     * @return
-     */
-    private boolean checkSession(String username)
-    {
-        return sessionCookies.containsKey( username );
-    }
-
-    /**
      * Request biostore server using HTTPS protocol
      * @param username current user name
      * @param action name of biostore action
      * @param parameters action parameters
      * @return request result as JSON object
      */
+    @Override
     public JSONObject askServer(String username, String action, Map<String, String> parameters)
     {
         //TODO: check if network configuration is necessary
