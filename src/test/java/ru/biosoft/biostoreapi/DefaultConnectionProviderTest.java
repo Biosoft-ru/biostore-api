@@ -23,6 +23,9 @@ public class DefaultConnectionProviderTest
     private BiostoreConnector mock;
     private DefaultConnectionProvider test;
 
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
     @Before
     public void setUp() throws Exception
     {
@@ -44,19 +47,26 @@ public class DefaultConnectionProviderTest
     }
 
     @Test
-    public void projectListWithToken()
+    public void jwToken()
     {
-        String token = "{'type':'ok','jwtoken':'123123'}";
-        Map<String, String> params1 = Maps.builder().put( ATTR_USERNAME, "test" ).put( ATTR_PASSWORD, "test" ).build();
-        when( mock.askServer( eq( "test" ), eq( ACTION_LOGIN ), eq( params1 ) ) ).thenReturn( new JSONObject( doubleQuotes( token ) ) );
+        String res = "{'type':'ok','jwtoken':'123123'}";
+        Map<String, String> params = Maps.builder().put( ATTR_USERNAME, "test" ).put( ATTR_PASSWORD, "test" ).build();
+        when( mock.askServer( eq( "test" ), eq( ACTION_LOGIN ), eq( params ) ) ).thenReturn( new JSONObject( doubleQuotes( res ) ) );
 
         JWToken jwToken = test.getJWToken( "test", "test" );
         assertEquals( "123123", jwToken.getTokenValue() );
+        assertEquals( "test", jwToken.getUsername() );
+    }
+
+    @Test
+    public void projectList()
+    {
+        JWToken jwToken = new JWToken( "test", "123123" );
 
         String res = "{'permissions':[{'path':'data/Collaboration/Demo','permissions':3}],'jwtoken':'123123',"
                 + "'admin':false,'groups':[],'type':'ok','limits':[],'products':[{'name':'Server'}]}";
-        Map<String, String> params2 = Maps.builder().put( ATTR_JWTOKEN, "123123" ).build();
-        when( mock.askServer( eq( "test" ), eq( ACTION_LOGIN ), eq( params2 ) ) ).thenReturn( new JSONObject( doubleQuotes( res ) ) );
+        Map<String, String> params = Maps.builder().put( ATTR_JWTOKEN, jwToken.getTokenValue() ).build();
+        when( mock.askServer( eq( "test" ), eq( ACTION_LOGIN ), eq( params ) ) ).thenReturn( new JSONObject( doubleQuotes( res ) ) );
 
         List<Project> projectList = test.getProjectList( jwToken );
 
@@ -66,16 +76,10 @@ public class DefaultConnectionProviderTest
         assertEquals( 3, projectList.get( 0 ).getPermissions() );
     }
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     @Test
     public void errorLogin()
     {
-        thrown.expect( SecurityException.class );
-        thrown.expectMessage( "Incorrect email or password" );
-
-        String res = "{'type':'error','message':'Incorrect email or password'}";
+        String res = constructErrorResponse( "Incorrect email or password" );
         when( mock.askServer( eq( "errorName" ), eq( ACTION_LOGIN ), any() ) ).thenReturn( new JSONObject( doubleQuotes( res ) ) );
 
         test.authorize( "errorName", "", null );
@@ -84,23 +88,23 @@ public class DefaultConnectionProviderTest
     @Test
     public void errorAddUserToProject()
     {
-        String token = "{'type':'ok','jwtoken':'123123'}";
-        Map<String, String> params1 = Maps.builder().put( ATTR_USERNAME, "test" ).put( ATTR_PASSWORD, "test" ).build();
-        when( mock.askServer( eq( "test" ), eq( ACTION_LOGIN ), eq( params1 ) ) ).thenReturn( new JSONObject( doubleQuotes( token ) ) );
+        JWToken jwToken = new JWToken( "test", "123123" );
 
-        JWToken jwToken = test.getJWToken( "test", "test" );
-        assertEquals( "123123", jwToken.getTokenValue() );
-
-        thrown.expect( SecurityException.class );
-        thrown.expectMessage( "Only group or server administrator can add users to project" );
-
-        String res = "{'type':'error','message':'Only group or server administrator can add users to project'}";
-        Map<String, String> params2 = Maps.builder().put( ATTR_JWTOKEN, "123123" ).put( ATTR_GROUP_USER, "testUser" )
+        String res = constructErrorResponse( "Only group or server administrator can add users to project" );
+        Map<String, String> params = Maps.builder().put( ATTR_JWTOKEN, jwToken.getTokenValue() ).put( ATTR_GROUP_USER, "testUser" )
                 .put( ATTR_PROJECT_NAME, "Demo" ).build();
-        when( mock.askServer( eq( "test" ), eq( ACTION_ADD_TO_PROJECT ), eq( params2 ) ) )
+        when( mock.askServer( eq( "test" ), eq( ACTION_ADD_TO_PROJECT ), eq( params ) ) )
                 .thenReturn( new JSONObject( doubleQuotes( res ) ) );
 
         test.addUserToProject( jwToken, "testUser", "Demo" );
+    }
+
+    private String constructErrorResponse(String errorMessage)
+    {
+        thrown.expect( SecurityException.class );
+        thrown.expectMessage( errorMessage );
+
+        return "{'type':'error','message':'" + errorMessage + "'}";
     }
 
     private static String doubleQuotes(Object s)
