@@ -7,8 +7,8 @@ import org.json.JSONObject;
 
 public class Project
 {
-    static final String PROJECT_PREFIX_B = "data/Collaboration";
-    static final String PROJECT_PREFIX_G = "data/Projects";
+    static final String PROJECT_PREFIX_B = "data/Collaboration/";
+    static final String PROJECT_PREFIX_G = "data/Projects/";
 
     private final String projectName;
     private final int permissions;
@@ -73,12 +73,16 @@ public class Project
         return new Project( getProjectNameFromPath( path ), permission );
     }
 
-    public static boolean isProjectPath(String path)
+    private static boolean isProjectPath(String path)
     {
-        return path.startsWith( "data/Collaboration/" ) || path.startsWith( "data/Projects/" );
+        return isPrefixCorrect( path, PROJECT_PREFIX_B ) || isPrefixCorrect( path, PROJECT_PREFIX_G );
     }
-    public static String getProjectNameFromPath(String path)
+    private static boolean isPrefixCorrect(String path, String expectedPrefix)
     {
-        return path.replace( "data/Collaboration/", "" ).replace( "data/Projects/", "" );
+        return path.startsWith( expectedPrefix ) && !path.equals( expectedPrefix );
+    }
+    private static String getProjectNameFromPath(String path)
+    {
+        return path.replace( PROJECT_PREFIX_B, "" ).replace( PROJECT_PREFIX_G, "" );
     }
 }
