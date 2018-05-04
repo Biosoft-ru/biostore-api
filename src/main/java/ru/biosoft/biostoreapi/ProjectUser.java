@@ -15,7 +15,7 @@ public class ProjectUser implements Comparable<ProjectUser>
     public ProjectUser(String user, String role)
     {
         if( user == null || user.isEmpty() || role == null || role.isEmpty() )
-            throw new IllegalArgumentException( "User and role must be nonnull and not empty" );
+            throw new IllegalArgumentException( "User and role must be not null and not empty" );
         this.user = user;
         this.role = role;
     }
