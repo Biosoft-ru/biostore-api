@@ -6,8 +6,9 @@ public class ProjectUser implements Comparable<ProjectUser>
 {
     private final String user;
     private final String role;
+
     /**
-     * Creates container that contains user name and role in project
+     * Creates container with user name and role in project
      * @param user not null and not empty name of the user
      * @param role not null and not empty role of the user
      * @throws IllegalArgumentException if user or role is null or empty

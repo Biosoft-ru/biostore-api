@@ -153,7 +153,7 @@ public class DefaultConnectionProvider
         {
             return arrayOfObjects( response.getJSONArray( "permissions" ) )
                     .map( Project::createFromJSON )
-                    .filter( p -> p != null )
+                    .filter( Objects::nonNull )
                     .collect( Collectors.toList() );
         }
         else
@@ -230,7 +230,7 @@ public class DefaultConnectionProvider
         }
         return arrayOfObjects( jsonResponse.getJSONArray( "projectUsers" ) )
                 .map( ProjectUser::createFromJSON )
-                .filter( pu -> pu != null )
+                .filter( Objects::nonNull )
                 .sorted()
                 .collect( Collectors.toList() );
     }
