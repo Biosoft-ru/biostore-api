@@ -7,6 +7,13 @@ import org.json.JSONObject;
 
 public class Project
 {
+    static final int PERMISSION_INFO = 0b00001;
+    static final int PERMISSION_READ = 0b00010;
+    static final int PERMISSION_WRITE = 0b00100;
+    static final int PERMISSION_DELETE = 0b01000;
+    static final int PERMISSION_ADMIN = 0b10000;
+    static final int PERMISSION_ALL = 0b11111;
+
     static final String PROJECT_PREFIX_B = "data/Collaboration/";
     static final String PROJECT_PREFIX_G = "data/Projects/";
 
@@ -26,21 +33,21 @@ public class Project
         if( permissionsStr == null )
         {
             List<String> permStrList = new ArrayList<>();
-            if( permissions == Permission.ALL )
+            if( permissions == PERMISSION_ALL )
             {
                 permStrList.add( "All" );
             }
             else
             {
-                if( ( permissions & Permission.INFO ) != 0 )
+                if( ( permissions & PERMISSION_INFO ) != 0 )
                     permStrList.add( "Info" );
-                if( ( permissions & Permission.READ ) != 0 )
+                if( ( permissions & PERMISSION_READ ) != 0 )
                     permStrList.add( "Read" );
-                if( ( permissions & Permission.WRITE ) != 0 )
+                if( ( permissions & PERMISSION_WRITE ) != 0 )
                     permStrList.add( "Write" );
-                if( ( permissions & Permission.DELETE ) != 0 )
+                if( ( permissions & PERMISSION_DELETE ) != 0 )
                     permStrList.add( "Delete" );
-                if( ( permissions & Permission.ADMIN ) != 0 )
+                if( ( permissions & PERMISSION_ADMIN ) != 0 )
                     permStrList.add( "Admin" );
             }
             permissionsStr = permStrList.isEmpty() ? "" : String.join( "/", permStrList );
