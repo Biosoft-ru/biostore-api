@@ -7,12 +7,12 @@ import org.json.JSONObject;
 
 public class Project
 {
-    static final int PERMISSION_INFO = 0b00001;
-    static final int PERMISSION_READ = 0b00010;
-    static final int PERMISSION_WRITE = 0b00100;
-    static final int PERMISSION_DELETE = 0b01000;
-    static final int PERMISSION_ADMIN = 0b10000;
-    static final int PERMISSION_ALL = 0b11111;
+    public static final int PERMISSION_INFO = 0b00001;
+    public static final int PERMISSION_READ = 0b00010;
+    public static final int PERMISSION_WRITE = 0b00100;
+    public static final int PERMISSION_DELETE = 0b01000;
+    public static final int PERMISSION_ADMIN = 0b10000;
+    public static final int PERMISSION_ALL = 0b11111;
 
     static final String PROJECT_PREFIX_B = "data/Collaboration/";
     static final String PROJECT_PREFIX_G = "data/Projects/";
