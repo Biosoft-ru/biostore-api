@@ -21,6 +21,7 @@ public class DefaultConnectionProvider
     public static final String ACTION_LOGIN = "login";
     public static final String ACTION_LOGOUT = "logout";
     public static final String ACTION_CREATE_PROJECT = "createProject";
+    public static final String ACTION_GET_PROJECT_LIST = "getProjectList";
     public static final String ACTION_ADD_TO_PROJECT = "addToProject";
     public static final String ACTION_REFRESH_J_W_TOKEN = "refreshJWToken";
     public static final String ACTION_CHANGE_ROLE_IN_PROJECT = "changeRoleInProject";
@@ -147,12 +148,12 @@ public class DefaultConnectionProvider
         Map<String, String> parameters = new HashMap<>();
         parameters.put( ATTR_JWTOKEN, jwToken.getTokenValue() );
         String username = jwToken.getUsername();
-        JSONObject response = biostoreConnector.askServer( username, ACTION_LOGIN, parameters );
+        JSONObject response = biostoreConnector.askServer( username, ACTION_GET_PROJECT_LIST, parameters );
 
         String status = response.getString( ATTR_TYPE );
         if( status.equals( TYPE_OK ) )
         {
-            return arrayOfObjects( response.getJSONArray( "permissions" ) )
+            return arrayOfObjects( response.getJSONArray( "projectList" ) )
                     .map( Project::createFromJSON )
                     .filter( Objects::nonNull )
                     .collect( Collectors.toList() );

@@ -90,10 +90,9 @@ public class DefaultConnectionProviderTest
     {
         JWToken jwToken = new JWToken( "test", "123123" );
 
-        String res = "{'permissions':[{'path':'data/Collaboration/Demo','permissions':3}],'jwtoken':'123123',"
-                + "'admin':false,'groups':[],'type':'ok','limits':[],'products':[{'name':'Server'}]}";
+        String res = "{'projectList':[{'path':'data/Collaboration/Demo','permissions':3}],'type':'ok'}";
         Map<String, String> params = Maps.builder().put( ATTR_JWTOKEN, jwToken.getTokenValue() ).build();
-        when( mock.askServer( eq( jwToken.getUsername() ), eq( ACTION_LOGIN ), eq( params ) ) )
+        when( mock.askServer( eq( jwToken.getUsername() ), eq( ACTION_GET_PROJECT_LIST ), eq( params ) ) )
                 .thenReturn( new JSONObject( doubleQuotes( res ) ) );
 
         List<Project> projectList = test.getProjectList( jwToken );
@@ -252,7 +251,7 @@ public class DefaultConnectionProviderTest
 
         String res = constructErrorResponse( "Can not get project list" );
         Map<String, String> params = Maps.builder().put( ATTR_JWTOKEN, jwToken.getTokenValue() ).build();
-        when( mock.askServer( eq( jwToken.getUsername() ), eq( ACTION_LOGIN ), eq( params ) ) )
+        when( mock.askServer( eq( jwToken.getUsername() ), eq( ACTION_GET_PROJECT_LIST ), eq( params ) ) )
                 .thenReturn( new JSONObject( doubleQuotes( res ) ) );
 
         test.getProjectList( jwToken );
@@ -265,7 +264,7 @@ public class DefaultConnectionProviderTest
 
         String res = constructErrorResponse( null );
         Map<String, String> params = Maps.builder().put( ATTR_JWTOKEN, jwToken.getTokenValue() ).build();
-        when( mock.askServer( eq( jwToken.getUsername() ), eq( ACTION_LOGIN ), eq( params ) ) )
+        when( mock.askServer( eq( jwToken.getUsername() ), eq( ACTION_GET_PROJECT_LIST ), eq( params ) ) )
                 .thenReturn( new JSONObject( doubleQuotes( res ) ) );
 
         test.getProjectList( jwToken );
