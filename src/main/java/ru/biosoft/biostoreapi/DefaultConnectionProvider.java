@@ -2,7 +2,6 @@ package ru.biosoft.biostoreapi;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -47,8 +46,6 @@ public class DefaultConnectionProvider
     public static final String ATTR_MESSAGE = "message";
     public static final String ATTR_PERMISSION = "permission";
 
-    private static final long MAX_PERMISSION_TIME = 1000L * 60 * 60 * 24 * 365; // 365 days
-
     protected BiostoreConnector biostoreConnector;
 
     private static final String BIOSTORE_DEFAULT_URL = "https://bio-store.org/biostore";
@@ -63,66 +60,7 @@ public class DefaultConnectionProvider
         this.biostoreConnector = biostoreConnector;
     }
 
-    public UserPermissions authorize(String username, String password, String remoteAddress)
-    {
-        Map<String, String> parameters = prepareLoginParametersMap( username, password );
-        if( remoteAddress != null )
-            parameters.put( ATTR_IP, remoteAddress );
-        JSONObject response = biostoreConnector.askServer( username, ACTION_LOGIN, parameters );
-
-        String status = response.getString( ATTR_TYPE );
-        if( status.equals( TYPE_OK ) )
-        {
-            String[] products = getProducts( response ).toArray( String[]::new );
-            UserPermissions result = new UserPermissions( username, password, products, getLimits( response ) );
-            initPermissions( result, response );
-            return result;
-        }
-        else
-        {
-            if( response.opt( ATTR_MESSAGE ) != null )
-            {
-                log.severe( "While authorizing " + username + " (" + remoteAddress + "):" + response.get( ATTR_MESSAGE ) );
-                throw new SecurityException( response.getString( ATTR_MESSAGE ) );
-            }
-            else
-            {
-                throw new SecurityException( response.toString() );
-            }
-        }
-    }
-
-    private static Map<String, Long> getLimits(JSONObject response)
-    {
-        return arrayOfObjects( response.getJSONArray( "limits" ) )
-                .collect( Collectors.toMap( limit -> limit.getString( "name" ), limit -> limit.getLong( "value" ) ) );
-    }
-
-    private static Stream<String> getProducts(JSONObject response)
-    {
-        return arrayOfObjects( response.getJSONArray( "products" ) ).map( val -> val.getString( "name" ) );
-    }
-
-    private void initPermissions(UserPermissions userPermissions, JSONObject response)
-    {
-        Hashtable<String, Permission> dbToPermission = userPermissions.getDbToPermission();
-        long time = System.currentTimeMillis() + MAX_PERMISSION_TIME;
-        if( response.optBoolean( "admin", false ) )
-        {
-            dbToPermission.put( "/", new Permission( Permission.ADMIN, userPermissions.getUser(), "", time ) );
-        }
-        else
-        {
-            arrayOfObjects( response.getJSONArray( "permissions" ) ).forEach( obj -> dbToPermission.put( obj.getString( "path" ),
-                    new Permission( obj.getInt( "permissions" ), userPermissions.getUser(), "", time ) ) );
-        }
-        //TODO: rework or remove
-        arrayOfObjects( response.getJSONArray( "groups" ) ).map( val -> val.getString( "name" ) )
-                .forEach( name -> dbToPermission.put( "groups/" + name,
-                        new Permission( Permission.READ, userPermissions.getUser(), "", time ) ) );
-    }
-
-    public static Stream<JSONObject> arrayOfObjects(JSONArray value)
+    private static Stream<JSONObject> arrayOfObjects(JSONArray value)
     {
         List<JSONObject> arr = new ArrayList<>();
         for( int i = 0; i < value.length(); i++ )

@@ -34,19 +34,6 @@ public class DefaultConnectionProviderTest
     }
 
     @Test
-    public void authorize()
-    {
-        String res = "{'permissions':[{'path':'data/Collaboration/Demo','permissions':3}],'jwtoken':'123123',"
-                + "'admin':false,'groups':[],'type':'ok','limits':[],'products':[{'name':'Server'}]}";
-        when( mock.askServer( eq( "" ), eq( ACTION_LOGIN ), any() ) ).thenReturn( new JSONObject( doubleQuotes( res ) ) );
-
-        UserPermissions authorize = test.authorize( "", "", null );
-
-        assertEquals( 1, authorize.getDbToPermission().size() );
-        assertEquals( 3, authorize.getDbToPermission().get( "data/Collaboration/Demo" ).getPermissions() );
-    }
-
-    @Test
     public void logout()
     {
         JWToken jwToken = new JWToken( "test", "123123" );
@@ -167,24 +154,6 @@ public class DefaultConnectionProviderTest
     {
         assertEquals( expectedUser, pu.getUser() );
         assertEquals( expectedRole, pu.getRole() );
-    }
-
-    @Test
-    public void errorLogin()
-    {
-        String res = constructErrorResponse( "Incorrect email or password" );
-        when( mock.askServer( eq( "errorName" ), eq( ACTION_LOGIN ), any() ) ).thenReturn( new JSONObject( doubleQuotes( res ) ) );
-
-        test.authorize( "errorName", "", null );
-    }
-
-    @Test
-    public void errorLoginNoMessage()
-    {
-        String res = constructErrorResponse( null );
-        when( mock.askServer( eq( "errorName" ), eq( ACTION_LOGIN ), any() ) ).thenReturn( new JSONObject( doubleQuotes( res ) ) );
-
-        test.authorize( "errorName", "", null );
     }
 
     @Test
