@@ -33,11 +33,9 @@ public class DefaultConnectionProvider
     public static final String ATTR_JWTOKEN = "jwtoken";
     public static final String ATTR_USERNAME = "username";
     public static final String ATTR_PASSWORD = "password";
-    public static final String ATTR_IP = "ip";
+    //public static final String ATTR_IP = "ip";
     public static final String ATTR_SUDO = "sudo";
 
-    public static final String ATTR_GROUP = "group";
-    public static final String ATTR_MODULE = "module";
     public static final String ATTR_GROUP_USER = "user";
     public static final String ATTR_GROUP_ROLE = "role";
     public static final String ATTR_PROJECT_NAME = "projectName";
@@ -58,27 +56,6 @@ public class DefaultConnectionProvider
     public DefaultConnectionProvider(BiostoreConnector biostoreConnector)
     {
         this.biostoreConnector = biostoreConnector;
-    }
-
-    private static Stream<JSONObject> arrayOfObjects(JSONArray value)
-    {
-        List<JSONObject> arr = new ArrayList<>();
-        for( int i = 0; i < value.length(); i++ )
-        {
-            arr.add( value.getJSONObject( i ) );
-        }
-        return arr.stream();
-    }
-
-    private static Map<String, String> prepareLoginParametersMap(String username, String password)
-    {
-        Map<String, String> parameters = new HashMap<>();
-        String[] fields = username.split( "\\$" );
-        parameters.put( ATTR_USERNAME, fields[0] );
-        parameters.put( ATTR_PASSWORD, password );
-        if( fields.length > 1 )
-            parameters.put( ATTR_SUDO, fields[1] );
-        return parameters;
     }
 
     public List<Project> getProjectList(JWToken jwToken)
@@ -148,7 +125,12 @@ public class DefaultConnectionProvider
 
     public JWToken getJWToken(String username, String password)
     {
-        Map<String, String> parameters = prepareLoginParametersMap( username, password );
+        Map<String, String> parameters = new HashMap<>();
+        String[] fields = username.split( "\\$" );
+        parameters.put( ATTR_USERNAME, fields[0] );
+        parameters.put( ATTR_PASSWORD, password );
+        if( fields.length > 1 )
+            parameters.put( ATTR_SUDO, fields[1] );
 
         JSONObject response = biostoreConnector.askServer( username, ACTION_LOGIN, parameters );
         checkResponse( "During authorizing '" + username + "'", response );
@@ -190,5 +172,15 @@ public class DefaultConnectionProvider
             log.severe( errorMessagePrefix + ": " + message );
             throw new SecurityException( message );
         }
+    }
+
+    private static Stream<JSONObject> arrayOfObjects(JSONArray value)
+    {
+        List<JSONObject> arr = new ArrayList<>();
+        for( int i = 0; i < value.length(); i++ )
+        {
+            arr.add( value.getJSONObject( i ) );
+        }
+        return arr.stream();
     }
 }
