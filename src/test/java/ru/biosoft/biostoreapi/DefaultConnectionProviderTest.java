@@ -58,6 +58,20 @@ public class DefaultConnectionProviderTest
     }
 
     @Test
+    public void jwTokenSudo()
+    {
+        String res = "{'type':'ok','jwtoken':'123123'}";
+        Map<String, String> params = Maps.builder().put( ATTR_USERNAME, "testAdmin" ).put( ATTR_PASSWORD, "test" )
+                .put( ATTR_SUDO, "testUser" ).build();
+        when( mock.askServer( eq( "testAdmin$testUser" ), eq( ACTION_LOGIN ), eq( params ) ) )
+                .thenReturn( new JSONObject( doubleQuotes( res ) ) );
+
+        JWToken jwToken = test.getJWToken( "testAdmin$testUser", "test" );
+        assertEquals( "123123", jwToken.getTokenValue() );
+        assertEquals( "testAdmin$testUser", jwToken.getUsername() );
+    }
+
+    @Test
     public void refreshJWToken()
     {
         JWToken jwToken = new JWToken( "test", "123123" );
@@ -179,6 +193,15 @@ public class DefaultConnectionProviderTest
     }
 
     @Test
+    public void errorJWTokenNotSupported()
+    {
+        String res = constructMessageResponse( "Specified server does not support json web tokens.", TYPE_OK );
+        when( mock.askServer( eq( "" ), eq( ACTION_LOGIN ), any() ) ).thenReturn( new JSONObject( doubleQuotes( res ) ) );
+
+        test.getJWToken( "", "" );
+    }
+
+    @Test
     public void errorJWTokenNoMessage()
     {
         String res = constructErrorResponse( null );
@@ -206,6 +229,19 @@ public class DefaultConnectionProviderTest
         JWToken jwToken = new JWToken( "test", "123123" );
 
         String res = constructErrorResponse( null );
+        Map<String, String> params = Maps.builder().put( ATTR_JWTOKEN, jwToken.getTokenValue() ).build();
+        when( mock.askServer( eq( jwToken.getUsername() ), eq( ACTION_REFRESH_J_W_TOKEN ), eq( params ) ) )
+                .thenReturn( new JSONObject( doubleQuotes( res ) ) );
+
+        test.refreshJWToken( jwToken );
+    }
+
+    @Test
+    public void errorRefreshJWTokenNotSupported()
+    {
+        JWToken jwToken = new JWToken( "test", "123123" );
+
+        String res = constructMessageResponse( "Specified server does not support json web tokens.", TYPE_OK );
         Map<String, String> params = Maps.builder().put( ATTR_JWTOKEN, jwToken.getTokenValue() ).build();
         when( mock.askServer( eq( jwToken.getUsername() ), eq( ACTION_REFRESH_J_W_TOKEN ), eq( params ) ) )
                 .thenReturn( new JSONObject( doubleQuotes( res ) ) );
