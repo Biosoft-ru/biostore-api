@@ -86,28 +86,14 @@ public class DefaultConnectionProvider
         Map<String, String> parameters = new HashMap<>();
         parameters.put( ATTR_JWTOKEN, jwToken.getTokenValue() );
         String username = jwToken.getUsername();
-        JSONObject response = biostoreConnector.askServer( username, ACTION_GET_PROJECT_LIST, parameters );
 
-        String status = response.getString( ATTR_TYPE );
-        if( status.equals( TYPE_OK ) )
-        {
-            return arrayOfObjects( response.getJSONArray( "projectList" ) )
-                    .map( Project::createFromJSON )
-                    .filter( Objects::nonNull )
-                    .collect( Collectors.toList() );
-        }
-        else
-        {
-            if( response.opt( ATTR_MESSAGE ) != null )
-            {
-                log.severe( "While authorizing " + username + ":" + response.get( ATTR_MESSAGE ) );
-                throw new SecurityException( response.getString( ATTR_MESSAGE ) );
-            }
-            else
-            {
-                throw new SecurityException( response.toString() );
-            }
-        }
+        JSONObject response = biostoreConnector.askServer( username, ACTION_GET_PROJECT_LIST, parameters );
+        checkResponse( "During list of projects request for '" + username + "'", response );
+
+        return arrayOfObjects( response.getJSONArray( "projectList" ) )
+                .map( Project::createFromJSON )
+                .filter( Objects::nonNull )
+                .collect( Collectors.toList() );
     }
 
     public void createProjectWithPermissions(JWToken jwToken, String projectName, int permission)
@@ -118,11 +104,7 @@ public class DefaultConnectionProvider
         parameters.put( ATTR_PERMISSION, String.valueOf( permission ) );
 
         JSONObject jsonResponse = biostoreConnector.askServer( jwToken.getUsername(), ACTION_CREATE_PROJECT, parameters );
-        if( !TYPE_OK.equals( jsonResponse.getString( ATTR_TYPE ) ) )
-        {
-            log.severe( jsonResponse.getString( ATTR_MESSAGE ) );
-            throw new SecurityException( jsonResponse.getString( ATTR_MESSAGE ) );
-        }
+        checkResponse( "During creating of new project ('" + projectName + "')", jsonResponse );
     }
 
     public void addUserToProject(JWToken jwToken, String userToAdd, String projectName)
@@ -133,11 +115,7 @@ public class DefaultConnectionProvider
         parameters.put( ATTR_GROUP_USER, userToAdd );
 
         JSONObject jsonResponse = biostoreConnector.askServer( jwToken.getUsername(), ACTION_ADD_TO_PROJECT, parameters );
-        if( !TYPE_OK.equals( jsonResponse.getString( ATTR_TYPE ) ) )
-        {
-            log.severe( jsonResponse.getString( ATTR_MESSAGE ) );
-            throw new SecurityException( jsonResponse.getString( ATTR_MESSAGE ) );
-        }
+        checkResponse( "During adding '" + userToAdd + "' to project '" + projectName + "'", jsonResponse );
     }
 
     public void changeUserRoleInProject(JWToken jwToken, String projectName, String userToChange, String newRole)
@@ -149,11 +127,7 @@ public class DefaultConnectionProvider
         params.put( ATTR_GROUP_ROLE, newRole );
 
         JSONObject jsonResponse = biostoreConnector.askServer( jwToken.getUsername(), ACTION_CHANGE_ROLE_IN_PROJECT, params );
-        if( !TYPE_OK.equals( jsonResponse.getString( ATTR_TYPE ) ) )
-        {
-            log.severe( jsonResponse.getString( ATTR_MESSAGE ) );
-            throw new SecurityException( jsonResponse.getString( ATTR_MESSAGE ) );
-        }
+        checkResponse( "During changing role of '" + userToChange + "' in project '" + projectName + "'", jsonResponse );
     }
 
     public List<ProjectUser> getProjectUsers(JWToken jwToken, String projectName)
@@ -163,11 +137,8 @@ public class DefaultConnectionProvider
         params.put( ATTR_PROJECT_NAME, projectName );
 
         JSONObject jsonResponse = biostoreConnector.askServer( jwToken.getUsername(), ACTION_PROJECT_USERS, params );
-        if( !TYPE_OK.equals( jsonResponse.getString( ATTR_TYPE ) ) )
-        {
-            log.severe( jsonResponse.getString( ATTR_MESSAGE ) );
-            throw new SecurityException( jsonResponse.getString( ATTR_MESSAGE ) );
-        }
+        checkResponse( "During list of users request for project '" + projectName + "'", jsonResponse );
+
         return arrayOfObjects( jsonResponse.getJSONArray( "projectUsers" ) )
                 .map( ProjectUser::createFromJSON )
                 .filter( Objects::nonNull )
@@ -178,53 +149,28 @@ public class DefaultConnectionProvider
     public JWToken getJWToken(String username, String password)
     {
         Map<String, String> parameters = prepareLoginParametersMap( username, password );
-        JSONObject response = biostoreConnector.askServer( username, ACTION_LOGIN, parameters );
 
-        String status = response.getString( ATTR_TYPE );
-        if( status.equals( TYPE_OK ) )
-        {
-            String jwToken = response.getString( ATTR_JWTOKEN );
-            if( jwToken == null )
-                throw new SecurityException( "Specified server does not support json web tokens." );
-            return new JWToken( username, jwToken );
-        }
-        else
-        {
-            if( response.opt( ATTR_MESSAGE ) != null )
-            {
-                log.severe( "While authorizing " + username + ":" + response.getString( ATTR_MESSAGE ) );
-                throw new SecurityException( response.getString( ATTR_MESSAGE ) );
-            }
-            else
-            {
-                throw new SecurityException( response.toString() );
-            }
-        }
+        JSONObject response = biostoreConnector.askServer( username, ACTION_LOGIN, parameters );
+        checkResponse( "During authorizing '" + username + "'", response );
+
+        String jwToken = response.optString( ATTR_JWTOKEN, null );
+        if( jwToken == null )
+            throw new SecurityException( "Specified server does not support json web tokens." );
+        return new JWToken( username, jwToken );
     }
 
     public JWToken refreshJWToken(JWToken jwToken)
     {
         Map<String, String> parameters = new HashMap<>();
         parameters.put( ATTR_JWTOKEN, jwToken.getTokenValue() );
-        JSONObject response = biostoreConnector.askServer( jwToken.getUsername(), ACTION_REFRESH_J_W_TOKEN, parameters );
 
-        String status = response.getString( ATTR_TYPE );
-        if( status.equals( TYPE_OK ) )
-        {
-            String jwTokenStr = response.getString( ATTR_JWTOKEN );
-            if( jwTokenStr == null )
-                throw new SecurityException( "Specified server does not support json web tokens." );
-            return new JWToken( jwToken.getUsername(), jwTokenStr );
-        }
-        else if( response.opt( ATTR_MESSAGE ) != null )
-        {
-            log.severe( "While refreshing token for " + jwToken.getUsername() + ":" + response.getString( ATTR_MESSAGE ) );
-            throw new SecurityException( response.getString( ATTR_MESSAGE ) );
-        }
-        else
-        {
-            throw new SecurityException( response.toString() );
-        }
+        JSONObject response = biostoreConnector.askServer( jwToken.getUsername(), ACTION_REFRESH_J_W_TOKEN, parameters );
+        checkResponse( "During refreshing token for '" + jwToken.getUsername() + "'", response );
+
+        String jwTokenStr = response.optString( ATTR_JWTOKEN, null );
+        if( jwTokenStr == null )
+            throw new SecurityException( "Specified server does not support json web tokens." );
+        return new JWToken( jwToken.getUsername(), jwTokenStr );
     }
 
     public void logout(JWToken jwToken)
@@ -233,10 +179,16 @@ public class DefaultConnectionProvider
         parameters.put( ATTR_JWTOKEN, jwToken.getTokenValue() );
 
         JSONObject jsonResponse = biostoreConnector.askServer( jwToken.getUsername(), ACTION_LOGOUT, parameters );
-        if( !TYPE_OK.equals( jsonResponse.getString( ATTR_TYPE ) ) )
+        checkResponse( "During logout", jsonResponse );
+    }
+
+    private static void checkResponse(String errorMessagePrefix, JSONObject response)
+    {
+        if( !TYPE_OK.equals( response.optString( ATTR_TYPE ) ) )
         {
-            log.severe( jsonResponse.getString( ATTR_MESSAGE ) );
-            throw new SecurityException( jsonResponse.getString( ATTR_MESSAGE ) );
+            String message = response.opt( ATTR_MESSAGE ) != null ? response.optString( ATTR_MESSAGE ) : response.toString();
+            log.severe( errorMessagePrefix + ": " + message );
+            throw new SecurityException( message );
         }
     }
 }
