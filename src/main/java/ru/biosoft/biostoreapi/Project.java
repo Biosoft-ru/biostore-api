@@ -14,9 +14,6 @@ public class Project
     public static final int PERMISSION_ADMIN = 0b10000;
     public static final int PERMISSION_ALL = 0b11111;
 
-    static final String PROJECT_PREFIX_B = "data/Collaboration/";
-    static final String PROJECT_PREFIX_G = "data/Projects/";
-
     private final String projectName;
     private final int permissions;
 
@@ -73,23 +70,10 @@ public class Project
 
     public static Project createFromJSON(JSONObject obj)
     {
-        String path = obj.optString( "path", "" );
-        if( path.isEmpty() || !isProjectPath( path ) )
+        String path = obj.optString( "name", "" );
+        if( path.isEmpty() )
             return null;
         int permission = obj.optInt( "permissions", 0 );
-        return new Project( getProjectNameFromPath( path ), permission );
-    }
-
-    private static boolean isProjectPath(String path)
-    {
-        return isPrefixCorrect( path, PROJECT_PREFIX_B ) || isPrefixCorrect( path, PROJECT_PREFIX_G );
-    }
-    private static boolean isPrefixCorrect(String path, String expectedPrefix)
-    {
-        return path.startsWith( expectedPrefix ) && !path.equals( expectedPrefix );
-    }
-    private static String getProjectNameFromPath(String path)
-    {
-        return path.replace( PROJECT_PREFIX_B, "" ).replace( PROJECT_PREFIX_G, "" );
+        return new Project( path, permission );
     }
 }

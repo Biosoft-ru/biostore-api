@@ -9,15 +9,15 @@ import org.junit.Test;
 public class ProjectTest
 {
     @Test
-    public void createFromJson1()
+    public void createFromJson()
     {
-        checkCreating( "data/Collaboration/", "Demo", 3 );
+        checkCreating( "Demo", 7 );
     }
 
     @Test
-    public void createFromJson2()
+    public void createFromJsonEmptyPermission()
     {
-        checkCreating( "data/Projects/", "Demo", 7 );
+        checkCreating( "Demo", null );
     }
 
     @Test
@@ -29,56 +29,51 @@ public class ProjectTest
     @Test
     public void createFromJsonIncorrect2()
     {
-        assertNull( initProject( "data/Examples/", "Demo", 0 ) );
-    }
-
-    @Test
-    public void createFromJsonIncorrect3()
-    {
-        assertNull( initProject( "data/Collaboration/", "", 0 ) );
+        assertNull( initProject( "", 0 ) );
     }
 
     @Test
     public void permissionsStrEmpty()
     {
-        Project p = initProject( "data/Collaboration/", "Demo", 0 );
+        Project p = initProject( "Demo", 0 );
         assertEquals( "", p.getPermissionsStr() );
     }
 
     @Test
     public void permissionsStrAll()
     {
-        Project p = initProject( "data/Collaboration/", "Demo", 31 );
+        Project p = initProject( "Demo", 31 );
         assertEquals( "All", p.getPermissionsStr() );
     }
 
     @Test
     public void permissionsStrAdminInfo()
     {
-        Project p = initProject( "data/Collaboration/", "Demo", 17 );
+        Project p = initProject( "Demo", 17 );
         assertEquals( "Info/Admin", p.getPermissionsStr() );
     }
 
     @Test
     public void permissionsStrRWD()
     {
-        Project p = initProject( "data/Collaboration/", "Demo", 14 );
+        Project p = initProject( "Demo", 14 );
         assertEquals( "Read/Write/Delete", p.getPermissionsStr() );
     }
 
-    private void checkCreating(String parentPath, String name, int permissions)
+    private void checkCreating(String name, Integer permissions)
     {
-        Project p = initProject( parentPath, name, permissions );
+        Project p = initProject( name, permissions );
         assertNotNull( p );
         assertEquals( name, p.getProjectName() );
-        assertEquals( permissions, p.getPermissions() );
+        assertEquals( permissions == null ? 0 : permissions.intValue(), p.getPermissions() );
     }
 
-    private Project initProject(String parentPath, String name, int permissions)
+    private Project initProject(String name, Integer permissions)
     {
         JSONObject obj = new JSONObject();
-        obj.put( "path", parentPath + name );
-        obj.put( "permissions", permissions );
+        obj.put( "name", name );
+        if( permissions != null )
+            obj.put( "permissions", permissions.intValue() );
         return Project.createFromJSON( obj );
     }
 }
