@@ -11,7 +11,7 @@ import static org.junit.Assert.*;
 
 public class BiostoreConnectorTest
 {
-    private static final String BIOSTORE_SERVER_NAME = "biblio.biouml.org";
+    private static final String BIOSTORE_SERVER_NAME = "biblio3.biouml.org";
 
     @Test
     public void askServer()
