@@ -9,7 +9,7 @@ import java.util.Map;
 
 import static org.junit.Assert.*;
 
-public class BiostoreConnectorTest
+public class BiostoreConnectorIT
 {
     private static final String BIOSTORE_SERVER_NAME = "biblio3.biouml.org";
 
